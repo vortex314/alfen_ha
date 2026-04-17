@@ -1,0 +1,25 @@
+[alfen]
+# IP address or hostname of your Alfen Eve charger
+host = "192.168.0.50"
+port = 502
+unit_id = 1
+# How often to poll the charger (seconds)
+poll_interval_secs = 5
+
+[mqtt]
+host = "pcthink.local"
+port = 1883
+client_id = "alfen-mqtt-bridge"
+# Use a dedicated MQTT account for this bridge (not the HA integration user)
+username = "alfen_bridge"
+password = "your_alfen_bridge_password"
+# Base topic prefix
+topic_prefix = "alfen"
+# Home Assistant MQTT discovery prefix
+ha_discovery_prefix = "homeassistant"
+
+[charger]
+# Friendly name shown in Home Assistant
+name = "Alfen Eve"
+# Unique ID used in MQTT topics (no spaces)
+unique_id = "alfen_eve_01"

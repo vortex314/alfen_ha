@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  alfen-ha:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: alfen-ha:local
+    container_name: alfen-ha
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+    command: ["/app/config.toml"]

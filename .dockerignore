@@ -1,0 +1,11 @@
+target
+.git
+.gitignore
+.vscode
+doc
+*.drawio
+*.png
+*.tar
+*.tar.gz
+README.md
+scripts

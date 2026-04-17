@@ -1,0 +1,401 @@
+<mxfile host="app.diagrams.net">
+  <diagram id="JdRr0anCmNZsa2bGqwsu" name="Page-1">
+    <mxGraphModel dx="1414" dy="911" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="1">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="col1_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;opacity=30;verticalAlign=top;fontSize=13;fontStyle=1;" value="" vertex="1">
+          <mxGeometry height="800" width="220" x="40" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="col1_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#006EAF;" value="Physical Devices" vertex="1">
+          <mxGeometry height="30" width="220" x="40" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="col2_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;opacity=30;verticalAlign=top;fontSize=13;fontStyle=1;" value="" vertex="1">
+          <mxGeometry height="800" width="170" x="290" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="col2_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#996600;" value="Device Protocol" vertex="1">
+          <mxGeometry height="30" width="170" x="290" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="col3_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;opacity=30;verticalAlign=top;fontSize=13;fontStyle=1;" value="" vertex="1">
+          <mxGeometry height="800" width="230" x="490" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="col3_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#276221;" value="Bridge Programs (Docker)" vertex="1">
+          <mxGeometry height="30" width="230" x="490" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="col4_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;opacity=30;verticalAlign=top;fontSize=13;fontStyle=1;" value="" vertex="1">
+          <mxGeometry height="800" width="190" x="750" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="col4_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#AE4132;" value="MQTT Broker" vertex="1">
+          <mxGeometry height="30" width="190" x="750" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="col5_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;opacity=30;verticalAlign=top;fontSize=13;fontStyle=1;" value="" vertex="1">
+          <mxGeometry height="800" width="220" x="970" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="col5_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#5A3B6E;" value="Home Assistant" vertex="1">
+          <mxGeometry height="30" width="220" x="970" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="alfen_dev" parent="1" style="shape=mxgraph.cisco.routers.router;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;" value="⚡ Alfen Eve&lt;br/&gt;EV Charger&lt;br/&gt;&lt;font style=&#39;font-size:10px;color:#555&#39;&gt;Eve Single Pro-line&lt;br/&gt;/ Double Pro-line&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="110" x="95" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="alfen_proto" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" value="Modbus TCP&lt;br/&gt;&lt;font style=&#39;font-size:10px&#39;&gt;port 502&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="140" x="305" y="195" as="geometry" />
+        </mxCell>
+        <mxCell id="alfen_bridge" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;verticalAlign=middle;" value="&lt;b&gt;alfen-modbus-mqtt&lt;/b&gt;&lt;br/&gt;&lt;font style=&#39;font-size:10px;color:#2a5f2a&#39;&gt;Python / Docker&lt;br/&gt;Polls Modbus registers&lt;br/&gt;→ publishes to MQTT&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="200" x="505" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="sma_dev" parent="1" style="shape=mxgraph.cisco.routers.router;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;" value="☀️ SMA Inverter&lt;br/&gt;&lt;font style=&#39;font-size:10px;color:#555&#39;&gt;Sunny Boy /&lt;br/&gt;Sunny Tripower&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="110" x="95" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="sma_proto" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" value="SunSpec Modbus&lt;br/&gt;&lt;font style=&#39;font-size:10px&#39;&gt;TCP / Speedwire UDP&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="140" x="305" y="395" as="geometry" />
+        </mxCell>
+        <mxCell id="sma_bridge" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;verticalAlign=middle;" value="&lt;b&gt;sma2mqtt / pysma&lt;/b&gt;&lt;br/&gt;&lt;font style=&#39;font-size:10px;color:#2a5f2a&#39;&gt;Python / Docker&lt;br/&gt;SunSpec + Speedwire&lt;br/&gt;→ publishes to MQTT&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="200" x="505" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="marstek_dev" parent="1" style="shape=mxgraph.cisco.routers.router;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;" value="🔋 Marstek&lt;br/&gt;Venus E Battery&lt;br/&gt;&lt;font style=&#39;font-size:10px;color:#555&#39;&gt;Home Battery&lt;br/&gt;Storage System&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="110" x="95" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="marstek_proto" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" value="Modbus RTU/TCP&lt;br/&gt;&lt;font style=&#39;font-size:10px&#39;&gt;RS-485 / port 502&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="140" x="305" y="595" as="geometry" />
+        </mxCell>
+        <mxCell id="marstek_bridge" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;verticalAlign=middle;" value="&lt;b&gt;marstek2mqtt&lt;/b&gt;&lt;br/&gt;&lt;font style=&#39;font-size:10px;color:#2a5f2a&#39;&gt;Python / Docker&lt;br/&gt;Polls BMS registers&lt;br/&gt;→ publishes to MQTT&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="200" x="505" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="mqtt_broker" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1;verticalAlign=middle;" value="&lt;b&gt;🦟 Mosquitto&lt;/b&gt;&lt;br/&gt;MQTT Broker&lt;br/&gt;&lt;font style=&#39;font-size:10px;color:#8B0000&#39;&gt;Docker container&lt;br/&gt;port 1883 / 8883 (TLS)&lt;br/&gt;Topic-based routing&lt;/font&gt;" vertex="1">
+          <mxGeometry height="120" width="160" x="765" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="ha_core" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;fontStyle=1;verticalAlign=middle;" value="🏠 &lt;b&gt;Home Assistant&lt;/b&gt;&lt;br/&gt;&lt;font style=&#39;font-size:10px;color:#5A3B6E&#39;&gt;Docker / HAOS&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="180" x="990" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="ha_mqtt_int" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="&lt;b&gt;MQTT Integration&lt;/b&gt;&lt;br/&gt;&lt;font style=&#39;font-size:10px;color:#5A3B6E&#39;&gt;Auto-discovery&lt;br/&gt;Subscribe to topics&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="180" x="990" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="ha_energy" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="⚡ &lt;b&gt;Energy Dashboard&lt;/b&gt;&lt;br/&gt;&lt;font style=&#39;font-size:10px;color:#5A3B6E&#39;&gt;Solar / Battery / EV&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="180" x="990" y="435" as="geometry" />
+        </mxCell>
+        <mxCell id="ha_auto" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="🤖 &lt;b&gt;Automations&lt;/b&gt;&lt;br/&gt;&lt;font style=&#39;font-size:10px;color:#5A3B6E&#39;&gt;Smart charging logic&lt;br/&gt;Grid optimization&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="180" x="990" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="ha_ui" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="📊 &lt;b&gt;Lovelace UI&lt;/b&gt;&lt;br/&gt;&lt;font style=&#39;font-size:10px;color:#5A3B6E&#39;&gt;Dashboards &amp; Cards&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="180" x="990" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="topic_alfen" parent="1" style="text;html=1;strokeColor=none;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;strokeColor=#d6b656;" value="alfen/charger/status&lt;br/&gt;alfen/charger/set" vertex="1">
+          <mxGeometry height="34" width="155" x="660" y="198" as="geometry" />
+        </mxCell>
+        <mxCell id="topic_sma" parent="1" style="text;html=1;strokeColor=none;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;strokeColor=#d6b656;" value="sma/inverter/power&lt;br/&gt;sma/inverter/energy" vertex="1">
+          <mxGeometry height="34" width="155" x="660" y="398" as="geometry" />
+        </mxCell>
+        <mxCell id="topic_marstek" parent="1" style="text;html=1;strokeColor=none;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;strokeColor=#d6b656;" value="marstek/battery/soc&lt;br/&gt;marstek/battery/power" vertex="1">
+          <mxGeometry height="34" width="155" x="660" y="598" as="geometry" />
+        </mxCell>
+        <mxCell id="e_alfen_proto" edge="1" parent="1" source="alfen_dev" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6c8ebf;strokeWidth=2;" target="alfen_proto">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_proto_alfen_bridge" edge="1" parent="1" source="alfen_proto" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6c8ebf;strokeWidth=2;" target="alfen_bridge">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sma_proto" edge="1" parent="1" source="sma_dev" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6c8ebf;strokeWidth=2;" target="sma_proto">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_proto_sma_bridge" edge="1" parent="1" source="sma_proto" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6c8ebf;strokeWidth=2;" target="sma_bridge">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_marstek_proto" edge="1" parent="1" source="marstek_dev" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6c8ebf;strokeWidth=2;" target="marstek_proto">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_proto_marstek_bridge" edge="1" parent="1" source="marstek_proto" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#6c8ebf;strokeWidth=2;" target="marstek_bridge">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_alfen_bridge_topic" edge="1" parent="1" source="alfen_bridge" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82b366;strokeWidth=2;dashed=1;" target="topic_alfen">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_alfen_topic_mqtt" edge="1" parent="1" source="topic_alfen" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.3;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=2;" target="mqtt_broker">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sma_bridge_topic" edge="1" parent="1" source="sma_bridge" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82b366;strokeWidth=2;dashed=1;" target="topic_sma">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_sma_topic_mqtt" edge="1" parent="1" source="topic_sma" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=2;" target="mqtt_broker">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_marstek_bridge_topic" edge="1" parent="1" source="marstek_bridge" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#82b366;strokeWidth=2;dashed=1;" target="topic_marstek">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_marstek_topic_mqtt" edge="1" parent="1" source="topic_marstek" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.7;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=2;" target="mqtt_broker">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_mqtt_ha_int" edge="1" parent="1" source="mqtt_broker" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=3;endArrow=block;endFill=1;" target="ha_mqtt_int">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_int_core" edge="1" parent="1" source="ha_mqtt_int" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=2;" target="ha_core">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_core_energy" edge="1" parent="1" source="ha_core" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=2;" target="ha_energy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_energy_auto" edge="1" parent="1" source="ha_energy" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=2;" target="ha_auto">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e_auto_ui" edge="1" parent="1" source="ha_auto" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=2;" target="ha_ui">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ctrl_label" parent="1" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;fontStyle=2;" value="↔ MQTT publish (control commands)" vertex="1">
+          <mxGeometry height="34" width="140" x="775" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="e_ha_ctrl_mqtt" edge="1" parent="1" source="ha_auto" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.85;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=2;dashed=1;endArrow=block;startArrow=block;startFill=1;endFill=1;" target="mqtt_broker">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="960" y="560" />
+              <mxPoint x="960" y="780" />
+              <mxPoint x="845" y="780" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_mqtt_alfen_ctrl" edge="1" parent="1" source="mqtt_broker" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.85;exitDx=0;exitDy=0;entryX=1;entryY=0.85;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=1;dashed=1;" target="alfen_bridge">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="730" y="486" />
+              <mxPoint x="730" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="legend_bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;opacity=80;" value="" vertex="1">
+          <mxGeometry height="230" width="200" x="1220" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="legend_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1;" value="Legend" vertex="1">
+          <mxGeometry height="25" width="200" x="1220" y="165" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" parent="1" style="text;html=1;strokeColor=#6c8ebf;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=0;" value="Device ↔ Bridge (polling)" vertex="1">
+          <mxGeometry height="20" width="170" x="1235" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" parent="1" style="text;html=1;strokeColor=#82b366;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=2;" value="MQTT publish (telemetry)" vertex="1">
+          <mxGeometry height="20" width="170" x="1235" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" parent="1" style="text;html=1;strokeColor=#9673a6;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=1;" value="MQTT subscribe (HA)" vertex="1">
+          <mxGeometry height="20" width="170" x="1235" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" parent="1" style="text;html=1;strokeColor=#b85450;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=2;" value="Control commands (bidirectional)" vertex="1">
+          <mxGeometry height="25" width="170" x="1235" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" parent="1" style="text;html=1;strokeColor=none;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;strokeColor=#82b366;" value="All bridges run in Docker&lt;br/&gt;on the same host as HA" vertex="1">
+          <mxGeometry height="40" width="170" x="1235" y="325" as="geometry" />
+        </mxCell>
+        <mxCell id="diagram_title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#333333;" value="Home Energy System — MQTT Bridge Architecture" vertex="1">
+          <mxGeometry height="40" width="800" x="40" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;opacity=30;" value="" vertex="1">
+          <mxGeometry height="1000" width="220" x="40" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-2" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#006EAF;" value="Physical Devices" vertex="1">
+          <mxGeometry height="30" width="220" x="40" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;opacity=30;" value="" vertex="1">
+          <mxGeometry height="1000" width="170" x="290" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-4" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#996600;" value="Device Protocol" vertex="1">
+          <mxGeometry height="30" width="170" x="290" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;opacity=30;" value="" vertex="1">
+          <mxGeometry height="1000" width="230" x="490" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-6" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#276221;" value="Bridge / Firmware" vertex="1">
+          <mxGeometry height="30" width="230" x="490" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-7" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;opacity=30;" value="" vertex="1">
+          <mxGeometry height="1000" width="190" x="750" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-8" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#AE4132;" value="MQTT Broker" vertex="1">
+          <mxGeometry height="30" width="190" x="750" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;opacity=30;" value="" vertex="1">
+          <mxGeometry height="1000" width="220" x="970" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-10" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;fontStyle=1;fontColor=#5A3B6E;" value="Home Assistant" vertex="1">
+          <mxGeometry height="30" width="220" x="970" y="65" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-11" parent="1" style="shape=mxgraph.cisco.routers.router;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;" value="⚡ Alfen Eve&lt;br/&gt;EV Charger&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#555&quot;&gt;Eve Single Pro-line&lt;br/&gt;/ Double Pro-line&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="110" x="95" y="170" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" value="Modbus TCP&lt;br/&gt;&lt;font style=&quot;font-size:10px&quot;&gt;port 502&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="140" x="305" y="195" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-13" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;verticalAlign=middle;" value="&lt;b&gt;alfen-modbus-mqtt&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#2a5f2a&quot;&gt;Python / Docker&lt;br/&gt;Polls Modbus registers&lt;br/&gt;→ publishes to MQTT&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="200" x="505" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-14" parent="1" style="shape=mxgraph.cisco.routers.router;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;" value="☀ SMA Inverter&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#555&quot;&gt;Sunny Boy /&lt;br/&gt;Sunny Tripower&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="110" x="95" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-15" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" value="SunSpec Modbus&lt;br/&gt;&lt;font style=&quot;font-size:10px&quot;&gt;TCP / Speedwire UDP&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="140" x="305" y="395" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-16" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;verticalAlign=middle;" value="&lt;b&gt;sma2mqtt / pysma&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#2a5f2a&quot;&gt;Python / Docker&lt;br/&gt;SunSpec + Speedwire&lt;br/&gt;→ publishes to MQTT&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="200" x="505" y="380" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-17" parent="1" style="shape=mxgraph.cisco.routers.router;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;" value="🔋 Marstek&lt;br/&gt;Venus E Battery&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#555&quot;&gt;Home Battery&lt;br/&gt;Storage System&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="110" x="95" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-18" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" value="Modbus RTU/TCP&lt;br/&gt;&lt;font style=&quot;font-size:10px&quot;&gt;RS-485 / port 502&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="140" x="305" y="595" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-19" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;verticalAlign=middle;" value="&lt;b&gt;marstek2mqtt&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#2a5f2a&quot;&gt;Python / Docker&lt;br/&gt;Polls BMS registers&lt;br/&gt;→ publishes to MQTT&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="200" x="505" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-20" parent="1" style="shape=mxgraph.cisco.routers.router;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=12;whiteSpace=wrap;html=1;verticalLabelPosition=bottom;verticalAlign=top;labelBackgroundColor=none;" value="🏭 P1 Smart Meter&lt;br/&gt;+ ESP32 Dongle&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#555&quot;&gt;Belgian DSMR 5.0&lt;br/&gt;grid import / export&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="110" x="95" y="780" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-21" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;fontStyle=1;" value="DSMR P1 Serial&lt;br/&gt;&lt;font style=&quot;font-size:10px&quot;&gt;RJ11 / 115200 baud&lt;/font&gt;" vertex="1">
+          <mxGeometry height="40" width="140" x="305" y="805" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-22" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=11;verticalAlign=middle;" value="&lt;b&gt;ESPHome firmware&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#7a3b00&quot;&gt;Runs ON the ESP32&lt;br/&gt;Native MQTT client&lt;br/&gt;No Docker needed&lt;/font&gt;" vertex="1">
+          <mxGeometry height="70" width="200" x="505" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-23" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d79b00;strokeColor=#a56700;fontSize=9;fontColor=#ffffff;fontStyle=1;" value="Direct MQTT — no host bridge required" vertex="1">
+          <mxGeometry height="22" width="200" x="505" y="868" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-24" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;fontStyle=1;verticalAlign=middle;" value="&lt;b&gt;Mosquitto&lt;/b&gt;&lt;br/&gt;MQTT Broker&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#8B0000&quot;&gt;Docker container&lt;br/&gt;port 1883 / 8883 (TLS)&lt;br/&gt;Topic-based routing&lt;/font&gt;" vertex="1">
+          <mxGeometry height="120" width="160" x="765" y="450" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-25" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;fontStyle=1;verticalAlign=middle;" value="&lt;b&gt;Home Assistant&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#5A3B6E&quot;&gt;Docker / HAOS&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="180" x="990" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-26" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="&lt;b&gt;MQTT Integration&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#5A3B6E&quot;&gt;Auto-discovery&lt;br/&gt;Subscribe to all topics&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="180" x="990" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-27" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="⚡ &lt;b&gt;Energy Dashboard&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#5A3B6E&quot;&gt;Solar / Battery / EV / Grid&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="180" x="990" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-28" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="&lt;b&gt;Automations&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#5A3B6E&quot;&gt;Smart charging logic&lt;br/&gt;Grid optimization&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="180" x="990" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-29" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="&lt;b&gt;Lovelace UI&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:10px;color:#5A3B6E&quot;&gt;Dashboards &amp; Cards&lt;/font&gt;" vertex="1">
+          <mxGeometry height="50" width="180" x="990" y="750" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-30" parent="1" style="text;html=1;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;strokeColor=#d6b656;" value="alfen/charger/status&lt;br/&gt;alfen/charger/set" vertex="1">
+          <mxGeometry height="34" width="155" x="660" y="198" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-31" parent="1" style="text;html=1;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;strokeColor=#d6b656;" value="sma/inverter/power&lt;br/&gt;sma/inverter/energy" vertex="1">
+          <mxGeometry height="34" width="155" x="660" y="398" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-32" parent="1" style="text;html=1;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;strokeColor=#d6b656;" value="marstek/battery/soc&lt;br/&gt;marstek/battery/power" vertex="1">
+          <mxGeometry height="34" width="155" x="660" y="598" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-33" parent="1" style="text;html=1;fillColor=#ffe6cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;strokeColor=#d79b00;" value="p1meter/power/import&lt;br/&gt;p1meter/power/export" vertex="1">
+          <mxGeometry height="34" width="155" x="660" y="808" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-34" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-11" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-35" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-12" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-36" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-14" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-37" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-15" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-38" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-17" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-39" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-18" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-40" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-20" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-21">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-41" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-21" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d79b00;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-42" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-13" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;strokeWidth=2;dashed=1;" target="aS0lr8xqakQ-g7Za_0jc-30">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-43" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-30" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0;entryY=0.15;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-44" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-16" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;strokeWidth=2;dashed=1;" target="aS0lr8xqakQ-g7Za_0jc-31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-45" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-31" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0;entryY=0.38;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-46" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-19" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;strokeWidth=2;dashed=1;" target="aS0lr8xqakQ-g7Za_0jc-32">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-47" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-32" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0;entryY=0.62;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-48" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-22" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d79b00;strokeWidth=2;dashed=1;" target="aS0lr8xqakQ-g7Za_0jc-33">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-49" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-33" style="edgeStyle=orthogonalEdgeStyle;html=1;entryX=0;entryY=0.85;entryDx=0;entryDy=0;strokeColor=#d79b00;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-24">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-50" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-24" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673a6;strokeWidth=3;endArrow=block;endFill=1;" target="aS0lr8xqakQ-g7Za_0jc-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-51" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-26" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-25">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-52" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-25" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-27">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-53" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-27" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-28">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-54" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-28" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeColor=#9673a6;strokeWidth=2;" target="aS0lr8xqakQ-g7Za_0jc-29">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-55" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-28" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.92;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=2;dashed=1;endArrow=block;startArrow=block;startFill=1;endFill=1;" target="aS0lr8xqakQ-g7Za_0jc-24">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="960" y="670" />
+              <mxPoint x="960" y="990" />
+              <mxPoint x="945" y="990" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-56" parent="1" style="text;html=1;strokeColor=#b85450;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=9;fontStyle=2;" value="control commands via MQTT" vertex="1">
+          <mxGeometry height="24" width="130" x="820" y="978" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-57" edge="1" parent="1" source="aS0lr8xqakQ-g7Za_0jc-24" style="edgeStyle=orthogonalEdgeStyle;html=1;exitX=0;exitY=0.92;exitDx=0;exitDy=0;entryX=1;entryY=0.85;entryDx=0;entryDy=0;strokeColor=#b85450;strokeWidth=1;dashed=1;" target="aS0lr8xqakQ-g7Za_0jc-13">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="730" y="560" />
+              <mxPoint x="730" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-58" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;opacity=90;" value="" vertex="1">
+          <mxGeometry height="310" width="215" x="1220" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-59" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=13;fontStyle=1;" value="Legend" vertex="1">
+          <mxGeometry height="25" width="215" x="1220" y="145" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-60" parent="1" style="text;html=1;strokeColor=#6c8ebf;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" value="Device to bridge (polling)" vertex="1">
+          <mxGeometry height="20" width="185" x="1235" y="178" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-61" parent="1" style="text;html=1;strokeColor=#82b366;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=2;" value="MQTT publish — Docker bridge" vertex="1">
+          <mxGeometry height="20" width="185" x="1235" y="203" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-62" parent="1" style="text;html=1;strokeColor=#d79b00;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=2;" value="MQTT publish — ESPHome direct" vertex="1">
+          <mxGeometry height="20" width="185" x="1235" y="228" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-63" parent="1" style="text;html=1;strokeColor=#9673a6;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" value="MQTT subscribe (HA integration)" vertex="1">
+          <mxGeometry height="20" width="185" x="1235" y="253" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-64" parent="1" style="text;html=1;strokeColor=#b85450;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=2;" value="Control commands (bidirectional)" vertex="1">
+          <mxGeometry height="20" width="185" x="1235" y="278" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-65" parent="1" style="text;html=1;strokeColor=#d79b00;fillColor=#ffe6cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="Rows 1-3: Docker bridge on host&lt;br/&gt;Row 4 (P1): Firmware on ESP32,&lt;br/&gt;no host process required" vertex="1">
+          <mxGeometry height="55" width="185" x="1235" y="308" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-66" parent="1" style="text;html=1;strokeColor=#82b366;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;fontSize=10;" value="All devices share one MQTT broker" vertex="1">
+          <mxGeometry height="30" width="185" x="1235" y="373" as="geometry" />
+        </mxCell>
+        <mxCell id="aS0lr8xqakQ-g7Za_0jc-67" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=1;fontColor=#333333;" value="Home Energy System — MQTT Bridge Architecture" vertex="1">
+          <mxGeometry height="40" width="900" x="40" y="10" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
