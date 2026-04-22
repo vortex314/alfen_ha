@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "egui",
+            "label": "run",
             "type": "shell",
             "options": {
                 "cwd": "${workspaceFolder}",
@@ -45,6 +45,31 @@
             },
             "presentation": {
                 "clear": true                        // <-- this line
+            }
+        },
+        {
+            "label": "modbus explorer",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "RUST_BACKTRACE": "full",
+                    "ZENOH_PLUGINS_PATH": "/home/lieven/workspace/zenoh/target/release/",
+                }
+            },
+            "command": "~/.cargo/bin/cargo",
+            "args": [
+                "run",
+                "--bin",
+                "modbus_explorer",
+                "--",
+                "modbus_explorer.yaml"
+            ],
+            "group": {
+                "kind": "build"
+            },
+            "presentation": {
+                "clear": true
             }
         }
     ]

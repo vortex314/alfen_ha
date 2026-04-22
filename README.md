@@ -60,6 +60,7 @@ The bridge provides a reliable path from low-level charger registers to high-lev
 - Energy: `energy_total_kwh`
 - Status: `available`, `mode3_state`, `mode3_state_name`
 - Control reflection: `max_current`
+- Setpoint proof: `setpoint_accounted_raw`, `setpoint_accounted`
 
 The published MQTT payload extends `ChargerState` with runtime diagnostics:
 
@@ -128,6 +129,8 @@ Example normal state payload (shape):
   "mode3_state": 3,
   "mode3_state_name": "C1 (charging, no ventilation)",
   "max_current": 16.0,
+  "setpoint_accounted_raw": 1,
+  "setpoint_accounted": true,
   "comm_ok": true,
   "last_error": null,
   "last_update_epoch_s": 1776521013
@@ -146,10 +149,10 @@ Example error state payload (shape):
 
 ### Home Assistant entity model
 
-The bridge publishes retained discovery configs for 17 entities:
+The bridge publishes retained discovery configs for 20 entities:
 
-- Sensors: power total, power L1/L2/L3, voltage L1/L2/L3, current L1/L2/L3, power factor, energy total, status text, max current (read-only), last error.
-- Binary sensor: connectivity (`comm_ok` -> `ON/OFF`, diagnostic category).
+- Sensors: power total, power L1/L2/L3, voltage L1/L2/L3, current L1/L2/L3, power factor, energy total, status text, max current (read-only), applied max current (`reg 1206`), last error.
+- Binary sensors: connectivity (`comm_ok` -> `ON/OFF`, diagnostic category), setpoint accounted (`reg 1214` -> `ON/OFF`, diagnostic category).
 - Number: max charge current command (`0..32 A`, step `1 A`).
 - Switch: friendly charging control (`ON/OFF`) mapped to max current writes.
 
@@ -192,6 +195,81 @@ Some values only change on specific events:
 - Home Assistant discovery topics (`homeassistant/.../config`):
   - published at startup (retained)
   - not republished every poll
+
+### Control Watchdog and Proof Registers
+
+Alfen control setpoint handling can be transient and priority-gated.
+
+#### Register `1210` (`MAX_CURRENT`) watchdog behavior
+
+- The charger can treat register `1210` as temporary setpoint input with watchdog semantics.
+- If no refresh arrives before watchdog expiry, charger may fall back to a safe/default current.
+- The bridge therefore keeps an internal `desired_max_current` (last accepted MQTT command) and rewrites it periodically.
+- Heartbeat period is configurable via:
+  - `alfen.setpoint_heartbeat_secs`
+  - default: `30` seconds
+  - safety clamp: minimum `5` seconds
+
+This means you do not need a separate Home Assistant automation that re-sends unchanged values.
+
+#### Register `1214` proof (`SETPOINT_ACCOUNTED`)
+
+The bridge reads register `1214` and logs/exports proof state:
+
+- `1`: charger is listening to Modbus setpoint.
+- `0`: charger received setpoint but is ignoring it due to higher-priority control.
+- other value: unexpected, logged as warning.
+
+Read results are exposed in MQTT state as:
+
+- `setpoint_accounted_raw` (`u16` or `null`)
+- `setpoint_accounted` (`true`/`false` or `null`)
+
+And in Home Assistant as:
+
+- Binary sensor `Setpoint Accounted` (`ON` when `1214 == 1`, `OFF` otherwise)
+
+The proof check runs:
+
+- after `set/max_current` command writes
+- after `set/charging` command writes
+- after each heartbeat refresh
+
+#### Requested vs applied visibility
+
+After command writes, the bridge performs immediate direct readback of `1210` and compares:
+
+- requested amps (from MQTT command)
+- applied amps (decoded from raw registers)
+
+It logs explicit mismatch warnings when the charger overrules or maps values differently.
+
+#### Register `1206` applied-limit visibility
+
+The bridge also reads register `1206` as `applied_max_current` (effective limit actually enforced by charger logic).
+
+- MQTT state field: `applied_max_current`
+- Home Assistant sensor: `Applied Max Current`
+
+If `1214 == 1` (setpoint accounted) but `applied_max_current` is lower than requested `max_current`, a higher-priority cap is likely active (for example station installer limit / local control policy).
+
+#### Home Assistant payload format for `max_current`
+
+Register `1210` is written as Modbus `float32` by this bridge.
+
+- Recommended HA command payload: decimal text, e.g. `10.0`.
+- The bridge also accepts plain integer text (`10`), quoted text (`"10.0"`), and JSON numeric payloads.
+
+Example HA MQTT publish service call:
+
+```yaml
+service: mqtt.publish
+data:
+  topic: alfen/alfen_eve_01/set/max_current
+  payload: "10.0"
+```
+
+If a command is accepted, logs show both requested and applied value after direct readback.
 
 #### Optional identity reads are one-shot
 
@@ -336,6 +414,60 @@ See `config.toml`:
 - `[alfen]` host, port, unit id, poll interval
 - `[mqtt]` broker host/port, credentials, topic prefixes
 - `[charger]` user-facing name and stable unique id
+
+## Modbus Explorer
+
+This repository also includes a separate GUI tool to inspect and write Modbus registers in real time:
+
+- Binary: `src/bin/modbus_explorer.rs`
+- Config: `modbus_explorer.yaml`
+- UI: `egui` table view with live values, raw register words, errors, and per-row write inputs.
+
+The explorer is intended for register discovery/debugging and manual control testing. It does not publish MQTT and runs independently from the bridge.
+
+### Explorer YAML format
+
+Top-level fields:
+
+- `tcp.host`: Modbus TCP host/IP.
+- `tcp.port`: Modbus TCP port (normally `502`).
+- `tcp.unit_id`: default slave/unit id used when a row does not set its own `unit_id`.
+- `tcp.poll_interval_ms`: polling interval in milliseconds.
+- `tcp.timeout_ms`: connect timeout in milliseconds.
+
+Each entry in `registers` supports:
+
+- `name`: label shown in UI.
+- `address`: 0-based Modbus register address.
+- `unit_id` (optional): per-register slave override (useful for Alfen split map, e.g. socket `1`, station `200`).
+- `register_type`: `holding` or `input`.
+- `data_type`: `u16`, `i16`, `u32`, `i32`, `u64`, `f32`, `f64`, `bool`, `string`.
+- `endian`: `big`, `little`, or `word_swap`.
+- `unit` (optional): engineering unit label.
+- `writable` (optional): `true` enables a write input/button for that row.
+- `length` (optional): number of 16-bit words for `string`.
+- `scale` (optional): numeric multiplier applied after decode.
+
+### Explorer behavior
+
+- Polls all configured rows continuously and updates the table in real time.
+- Shows decoded value and raw register words.
+- Retries `Illegal data address` reads once at `address + 1`.
+- Reconnects only on transport errors (broken pipe, reset, timeout, etc.).
+- Writes use Modbus single-register (`0x06`) or multi-register (`0x10`) depending on datatype width.
+
+### Run Explorer
+
+From terminal:
+
+```bash
+cargo run --bin modbus_explorer -- modbus_explorer.yaml
+```
+
+From VS Code Task Runner:
+
+- Task label: `modbus explorer`
+- File: `.vscode/tasks.json`
 
 ## Run
 

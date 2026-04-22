@@ -1,0 +1,664 @@
+tcp:
+  host: "192.168.0.50"
+  port: 502
+  unit_id: 1
+  poll_interval_ms: 1000
+  timeout_ms: 2500
+
+registers:
+  # 3.1 Product identification registers (slave 200)
+  - name: "Name"
+    address: 100
+    unit_id: 200
+    register_type: holding
+    data_type: string
+    length: 17
+    endian: big
+
+  - name: "Manufacturer"
+    address: 117
+    unit_id: 200
+    register_type: holding
+    data_type: string
+    length: 5
+    endian: big
+
+  - name: "Modbus Table Version"
+    address: 122
+    unit_id: 200
+    register_type: holding
+    data_type: i16
+    endian: big
+
+  - name: "Firmware Version"
+    address: 123
+    unit_id: 200
+    register_type: holding
+    data_type: string
+    length: 17
+    endian: big
+
+  - name: "Platform Type"
+    address: 140
+    unit_id: 200
+    register_type: holding
+    data_type: string
+    length: 17
+    endian: big
+
+  - name: "Station Serial Number"
+    address: 157
+    unit_id: 200
+    register_type: holding
+    data_type: string
+    length: 11
+    endian: big
+
+  - name: "Date Year"
+    address: 168
+    unit_id: 200
+    register_type: holding
+    data_type: i16
+    unit: "yr"
+    endian: big
+
+  - name: "Date Month"
+    address: 169
+    unit_id: 200
+    register_type: holding
+    data_type: i16
+    unit: "month"
+    endian: big
+
+  - name: "Date Day"
+    address: 170
+    unit_id: 200
+    register_type: holding
+    data_type: i16
+    unit: "day"
+    endian: big
+
+  - name: "Time Hour"
+    address: 171
+    unit_id: 200
+    register_type: holding
+    data_type: i16
+    unit: "h"
+    endian: big
+
+  - name: "Time Minute"
+    address: 172
+    unit_id: 200
+    register_type: holding
+    data_type: i16
+    unit: "min"
+    endian: big
+
+  - name: "Time Second"
+    address: 173
+    unit_id: 200
+    register_type: holding
+    data_type: i16
+    unit: "s"
+    endian: big
+
+  - name: "Uptime"
+    address: 174
+    unit_id: 200
+    register_type: holding
+    data_type: u64
+    scale: 0.001
+    unit: "s"
+    endian: big
+
+  - name: "Time Zone"
+    address: 178
+    unit_id: 200
+    register_type: holding
+    data_type: i16
+    unit: "min"
+    endian: big
+
+  # 3.2 Station status registers (slave 200)
+  - name: "Station Active Max Current"
+    address: 1100
+    unit_id: 200
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "Temperature"
+    address: 1102
+    unit_id: 200
+    register_type: holding
+    data_type: f32
+    unit: "C"
+    endian: big
+
+  - name: "OCPP State"
+    address: 1104
+    unit_id: 200
+    register_type: holding
+    data_type: u16
+    endian: big
+
+  - name: "Nr Of Sockets"
+    address: 1105
+    unit_id: 200
+    register_type: holding
+    data_type: u16
+    endian: big
+
+  # 3.3 SCN registers (slave 200)
+  - name: "SCN Name"
+    address: 1400
+    unit_id: 200
+    register_type: holding
+    data_type: string
+    length: 4
+    endian: big
+
+  - name: "SCN Sockets"
+    address: 1404
+    unit_id: 200
+    register_type: holding
+    data_type: u16
+    unit: "A"
+    endian: big
+
+  - name: "SCN Total Consumption Phase L1"
+    address: 1405
+    unit_id: 200
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "SCN Total Consumption Phase L2"
+    address: 1407
+    unit_id: 200
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "SCN Total Consumption Phase L3"
+    address: 1409
+    unit_id: 200
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "SCN Actual Max Current Phase L1"
+    address: 1411
+    unit_id: 200
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "SCN Actual Max Current Phase L2"
+    address: 1413
+    unit_id: 200
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "SCN Actual Max Current Phase L3"
+    address: 1415
+    unit_id: 200
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "SCN Max Current Per Phase L1"
+    address: 1417
+    unit_id: 200
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    writable: true
+    endian: big
+
+  - name: "SCN Max Current Per Phase L2"
+    address: 1419
+    unit_id: 200
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    writable: true
+    endian: big
+
+  - name: "SCN Max Current Per Phase L3"
+    address: 1421
+    unit_id: 200
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    writable: true
+    endian: big
+
+  - name: "Remaining Valid Time Max Current Phase L1"
+    address: 1423
+    unit_id: 200
+    register_type: holding
+    data_type: u32
+    unit: "s"
+    endian: big
+
+  - name: "Remaining Valid Time Max Current Phase L2"
+    address: 1425
+    unit_id: 200
+    register_type: holding
+    data_type: u32
+    unit: "s"
+    endian: big
+
+  - name: "Remaining Valid Time Max Current Phase L3"
+    address: 1427
+    unit_id: 200
+    register_type: holding
+    data_type: u32
+    unit: "s"
+    endian: big
+
+  - name: "SCN Safe Current"
+    address: 1429
+    unit_id: 200
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "SCN Modbus Slave Max Current Enable"
+    address: 1431
+    unit_id: 200
+    register_type: holding
+    data_type: u16
+    endian: big
+
+  # 3.4 Socket measurement registers (default slave 1)
+  - name: "Meter State"
+    address: 300
+    register_type: holding
+    data_type: u16
+    endian: big
+
+  - name: "Meter Last Value Timestamp"
+    address: 301
+    register_type: holding
+    data_type: u64
+    scale: 0.001
+    unit: "s"
+    endian: big
+
+  - name: "Meter Type"
+    address: 305
+    register_type: holding
+    data_type: u16
+    endian: big
+
+  - name: "Voltage Phase V(L1-N)"
+    address: 306
+    register_type: holding
+    data_type: f32
+    unit: "V"
+    endian: big
+
+  - name: "Voltage Phase V(L2-N)"
+    address: 308
+    register_type: holding
+    data_type: f32
+    unit: "V"
+    endian: big
+
+  - name: "Voltage Phase V(L3-N)"
+    address: 310
+    register_type: holding
+    data_type: f32
+    unit: "V"
+    endian: big
+
+  - name: "Voltage Phase V(L1-L2)"
+    address: 312
+    register_type: holding
+    data_type: f32
+    unit: "V"
+    endian: big
+
+  - name: "Voltage Phase V(L2-L3)"
+    address: 314
+    register_type: holding
+    data_type: f32
+    unit: "V"
+    endian: big
+
+  - name: "Voltage Phase V(L3-L1)"
+    address: 316
+    register_type: holding
+    data_type: f32
+    unit: "V"
+    endian: big
+
+  - name: "Current N"
+    address: 318
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "Current Phase L1"
+    address: 320
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "Current Phase L2"
+    address: 322
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "Current Phase L3"
+    address: 324
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "Current Sum"
+    address: 326
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "Power Factor Phase L1"
+    address: 328
+    register_type: holding
+    data_type: f32
+    endian: big
+
+  - name: "Power Factor Phase L2"
+    address: 330
+    register_type: holding
+    data_type: f32
+    endian: big
+
+  - name: "Power Factor Phase L3"
+    address: 332
+    register_type: holding
+    data_type: f32
+    endian: big
+
+  - name: "Power Factor Sum"
+    address: 334
+    register_type: holding
+    data_type: f32
+    endian: big
+
+  - name: "Frequency"
+    address: 336
+    register_type: holding
+    data_type: f32
+    unit: "Hz"
+    endian: big
+
+  - name: "Real Power Phase L1"
+    address: 338
+    register_type: holding
+    data_type: f32
+    unit: "W"
+    endian: big
+
+  - name: "Real Power Phase L2"
+    address: 340
+    register_type: holding
+    data_type: f32
+    unit: "W"
+    endian: big
+
+  - name: "Real Power Phase L3"
+    address: 342
+    register_type: holding
+    data_type: f32
+    unit: "W"
+    endian: big
+
+  - name: "Real Power Sum"
+    address: 344
+    register_type: holding
+    data_type: f32
+    unit: "W"
+    endian: big
+
+  - name: "Apparent Power Phase L1"
+    address: 346
+    register_type: holding
+    data_type: f32
+    unit: "VA"
+    endian: big
+
+  - name: "Apparent Power Phase L2"
+    address: 348
+    register_type: holding
+    data_type: f32
+    unit: "VA"
+    endian: big
+
+  - name: "Apparent Power Phase L3"
+    address: 350
+    register_type: holding
+    data_type: f32
+    unit: "VA"
+    endian: big
+
+  - name: "Apparent Power Sum"
+    address: 352
+    register_type: holding
+    data_type: f32
+    unit: "VA"
+    endian: big
+
+  - name: "Reactive Power Phase L1"
+    address: 354
+    register_type: holding
+    data_type: f32
+    unit: "VAr"
+    endian: big
+
+  - name: "Reactive Power Phase L2"
+    address: 356
+    register_type: holding
+    data_type: f32
+    unit: "VAr"
+    endian: big
+
+  - name: "Reactive Power Phase L3"
+    address: 358
+    register_type: holding
+    data_type: f32
+    unit: "VAr"
+    endian: big
+
+  - name: "Reactive Power Sum"
+    address: 360
+    register_type: holding
+    data_type: f32
+    unit: "VAr"
+    endian: big
+
+  - name: "Real Energy Delivered Phase L1"
+    address: 362
+    register_type: holding
+    data_type: f64
+    unit: "Wh"
+    endian: big
+
+  - name: "Real Energy Delivered Phase L2"
+    address: 366
+    register_type: holding
+    data_type: f64
+    unit: "Wh"
+    endian: big
+
+  - name: "Real Energy Delivered Phase L3"
+    address: 370
+    register_type: holding
+    data_type: f64
+    unit: "Wh"
+    endian: big
+
+  - name: "Real Energy Delivered Sum"
+    address: 374
+    register_type: holding
+    data_type: f64
+    unit: "Wh"
+    endian: big
+
+  - name: "Real Energy Consumed Phase L1"
+    address: 378
+    register_type: holding
+    data_type: f64
+    unit: "Wh"
+    endian: big
+
+  - name: "Real Energy Consumed Phase L2"
+    address: 382
+    register_type: holding
+    data_type: f64
+    unit: "Wh"
+    endian: big
+
+  - name: "Real Energy Consumed Phase L3"
+    address: 386
+    register_type: holding
+    data_type: f64
+    unit: "Wh"
+    endian: big
+
+  - name: "Real Energy Consumed Sum"
+    address: 390
+    register_type: holding
+    data_type: f64
+    unit: "Wh"
+    endian: big
+
+  - name: "Apparent Energy Phase L1"
+    address: 394
+    register_type: holding
+    data_type: f64
+    unit: "VAh"
+    endian: big
+
+  - name: "Apparent Energy Phase L2"
+    address: 398
+    register_type: holding
+    data_type: f64
+    unit: "VAh"
+    endian: big
+
+  - name: "Apparent Energy Phase L3"
+    address: 402
+    register_type: holding
+    data_type: f64
+    unit: "VAh"
+    endian: big
+
+  - name: "Apparent Energy Sum"
+    address: 406
+    register_type: holding
+    data_type: f64
+    unit: "VAh"
+    endian: big
+
+  - name: "Reactive Energy Phase L1"
+    address: 410
+    register_type: holding
+    data_type: f64
+    unit: "VArh"
+    endian: big
+
+  - name: "Reactive Energy Phase L2"
+    address: 414
+    register_type: holding
+    data_type: f64
+    unit: "VArh"
+    endian: big
+
+  - name: "Reactive Energy Phase L3"
+    address: 418
+    register_type: holding
+    data_type: f64
+    unit: "VArh"
+    endian: big
+
+  - name: "Reactive Energy Sum"
+    address: 422
+    register_type: holding
+    data_type: f64
+    unit: "VArh"
+    endian: big
+
+  # 3.4 Status and transaction registers (default slave 1)
+  - name: "Availability"
+    address: 1200
+    register_type: holding
+    data_type: u16
+    endian: big
+
+  - name: "Mode 3 State"
+    address: 1201
+    register_type: holding
+    data_type: string
+    length: 5
+    endian: big
+
+  - name: "Actual Applied Max Current"
+    address: 1206
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "Modbus Slave Max Current Remaining Valid Time"
+    address: 1208
+    register_type: holding
+    data_type: u32
+    unit: "s"
+    endian: big
+
+  - name: "Modbus Slave Max Current"
+    address: 1210
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    writable: true
+    endian: big
+
+  - name: "Active Load Balancing Safe Current"
+    address: 1212
+    register_type: holding
+    data_type: f32
+    unit: "A"
+    endian: big
+
+  - name: "Modbus Slave Received Setpoint Accounted For"
+    address: 1214
+    register_type: holding
+    data_type: u16
+    endian: big
+
+  - name: "Charge Using 1 Or 3 Phases"
+    address: 1215
+    register_type: holding
+    data_type: u16
+    unit: "phase"
+    writable: true
+    endian: big

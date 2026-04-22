@@ -3,6 +3,14 @@
 host = "192.168.0.50"
 port = 502
 unit_id = 1
+socket_unit_id = 1 # single socket 
+station_unit_id = 200
+control_unit_id = 200
+# Master takeover sequence: write SAFE_CURRENT -> VALIDITY -> MAX_CURRENT
+takeover_sequence = true
+takeover_safe_current_amps = 6.0
+takeover_validity_secs = 120
+takeover_validity_register = 1211
 # How often to poll the charger (seconds)
 poll_interval_secs = 5
 
