@@ -5,11 +5,13 @@ set -euo pipefail
 # Usage:
 #   ./scripts/export_portainer_image.sh
 #   ./scripts/export_portainer_image.sh --image alfen-ha:local --output alfen-ha-local.tar
+#   ./scripts/export_portainer_image.sh --image alfen-solar:local --output alfen-solar-local.tar --bin alfen_solar
 #   ./scripts/export_portainer_image.sh --gzip
 #   ./scripts/export_portainer_image.sh --no-build
 
 IMAGE="alfen-ha:local"
 OUTPUT="alfen-ha-local.tar"
+APP_BIN="alfen-mqtt"
 DO_BUILD=1
 DO_GZIP=0
 
@@ -20,6 +22,7 @@ Usage: export_portainer_image.sh [options]
 Options:
   --image <name:tag>   Docker image name to export (default: alfen-ha:local)
   --output <file.tar>  Output tar filename (default: alfen-ha-local.tar)
+  --bin <name>         Binary to containerize (default: alfen-mqtt)
   --no-build           Skip docker build step
   --gzip               Compress resulting tar to .tar.gz
   -h, --help           Show this help
@@ -34,6 +37,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --output)
       OUTPUT="$2"
+      shift 2
+      ;;
+    --bin)
+      APP_BIN="$2"
       shift 2
       ;;
     --no-build)
@@ -57,8 +64,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$DO_BUILD" -eq 1 ]]; then
-  echo "[1/2] Building image: $IMAGE"
-  docker build -t "$IMAGE" .
+  echo "[1/2] Building image: $IMAGE (bin=$APP_BIN)"
+  docker build --build-arg APP_BIN="$APP_BIN" -t "$IMAGE" .
 else
   echo "[1/2] Skipping build"
 fi

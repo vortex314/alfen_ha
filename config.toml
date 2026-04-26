@@ -36,3 +36,21 @@ ha_discovery_prefix = "homeassistant"
 name = "Alfen Eve"
 # Unique ID used in MQTT topics (no spaces)
 unique_id = "alfen_eve_01"
+
+[solar_control]
+# Live MQTT topic carrying returned solar power for the DSMR reader
+power_topic = "src/esp_p1/sensor/dsmr_reader_power_returned/state"
+# Auto-discovered HA switch command/state topics for solar charging mode
+mode_command_topic = "alfen/alfen_eve_01/set/solar_mode"
+mode_state_topic = "alfen/alfen_eve_01/state/solar_mode"
+debug_state_topic = "alfen/alfen_eve_01/state/solar_debug"
+power_threshold_kw = 5.0
+switch_high_after_secs = 300
+switch_low_after_secs = 300
+solar_high_current_amps = 6.0
+solar_low_current_amps = 4.0
+fixed_current_amps = 6.0
+mode_on_payload = "ON"
+mode_off_payload = "OFF"
+publish_only_on_change = true
+publish_ha_discovery = true

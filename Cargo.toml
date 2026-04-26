@@ -7,6 +7,10 @@ edition = "2021"
 name = "alfen-mqtt"
 path = "src/main.rs"
 
+[[bin]]
+name = "alfen_solar"
+path = "src/bin/alfen_solar.rs"
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 tokio-modbus = { version = "0.5", features = ["tcp"] }

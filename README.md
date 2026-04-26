@@ -533,6 +533,55 @@ cargo run --bin write_watch
 cargo run --bin write_watch -- 192.168.0.50 502 1
 ```
 
+## Solar Control Binary (`alfen_solar`)
+
+`alfen_solar` subscribes to:
+
+- `homeassistant/sensor/esp_p1/dsmr_reader_power_returned`
+- an MQTT command topic for solar mode (default: `<topic_prefix>/<unique_id>/set/solar_mode`)
+
+Behavior:
+
+- If mode is `solar` and power returned is `> 5.0 kW`, publish `6.0` A to `<topic_prefix>/<unique_id>/set/max_current`.
+- If mode is `solar` and power returned is `<= 5.0 kW`, publish `4.0` A.
+- If mode is `fixed`, publish `fixed_current_amps` (default `6.0` A).
+- Stabilization: in solar mode, the switch to high current only occurs after `switch_high_after_secs` of continuous high power; switch to low current only occurs after `switch_low_after_secs` of continuous low power.
+
+Home Assistant entity:
+
+- `alfen_solar` now publishes MQTT discovery for a switch entity `Solar Charging Mode`.
+- Toggle that switch in HA to control solar/fixed behavior.
+- The switch state is retained at `<topic_prefix>/<unique_id>/state/solar_mode`.
+- `alfen_solar` also publishes a diagnostic sensor `Solar Charging Debug` with timer progress and current decision details.
+
+Run:
+
+```bash
+cargo run --bin alfen_solar -- config.toml
+```
+
+Optional config section in `config.toml`:
+
+```toml
+[solar_control]
+power_topic = "homeassistant/sensor/esp_p1/dsmr_reader_power_returned"
+mode_command_topic = "alfen/alfen_eve_01/set/solar_mode"
+mode_state_topic = "alfen/alfen_eve_01/state/solar_mode"
+debug_state_topic = "alfen/alfen_eve_01/state/solar_debug"
+# optional: keep listening to an existing HA helper/input_boolean topic
+external_mode_topic = "homeassistant/input_boolean/solar_charging/state"
+mode_on_payload = "ON"
+mode_off_payload = "OFF"
+power_threshold_kw = 5.0
+switch_high_after_secs = 300
+switch_low_after_secs = 300
+solar_high_current_amps = 6.0
+solar_low_current_amps = 4.0
+fixed_current_amps = 6.0
+publish_only_on_change = true
+publish_ha_discovery = true
+```
+
 On startup, the bridge:
 
 1. Connects to MQTT and Modbus.
@@ -718,6 +767,7 @@ Optional flags:
 
 ```bash
 ./scripts/export_portainer_image.sh --image alfen-ha:local --output alfen-ha-local.tar
+./scripts/export_portainer_image.sh --image alfen-solar:local --output alfen-solar-local.tar --bin alfen_solar
 ./scripts/export_portainer_image.sh --gzip
 ./scripts/export_portainer_image.sh --no-build
 ```
