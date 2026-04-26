@@ -5,12 +5,17 @@ port = 502
 unit_id = 1
 socket_unit_id = 1 # single socket 
 station_unit_id = 200
-control_unit_id = 200
-# Master takeover sequence: write SAFE_CURRENT -> VALIDITY -> MAX_CURRENT
+control_unit_id = 1
+# Master takeover sequence: optional SAFE_CURRENT and/or VALIDITY prewrites, then MAX_CURRENT
 takeover_sequence = true
 takeover_safe_current_amps = 6.0
+# takeover_safe_current_register: optional register address to write safe current before MAX_CURRENT.
+# Not present in the table-based 3.4 mapping; omit unless your firmware supports it.
+# takeover_safe_current_register = ???
 takeover_validity_secs = 120
-takeover_validity_register = 1211
+# takeover_validity_register: optional register address to write validity seconds before MAX_CURRENT.
+# Not present in the standard Alfen Modbus register map - omit unless your firmware supports it.
+# takeover_validity_register = ???
 # How often to poll the charger (seconds)
 poll_interval_secs = 5
 

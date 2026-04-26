@@ -469,12 +469,68 @@ From VS Code Task Runner:
 - Task label: `modbus explorer`
 - File: `.vscode/tasks.json`
 
+## Recent Evolution
+
+This section summarizes the latest implementation steps and why they were made.
+
+1. Register-map alignment with Alfen 3.4 table
+  - Corrected status/control assumptions around `1200..1215`.
+  - Updated `MODE3_STATE` handling to read ASCII state text from `1201..1205` and map it to friendly names.
+  - Confirmed `MAX_CURRENT` as `FLOAT32` at `1210..1211` and `SETPOINT_ACCOUNTED` at `1214`.
+
+2. Max-current diagnostics after writes
+  - Added post-write/readback visibility for:
+    - `1210` (`max_current` direct readback),
+    - `1214` (`setpoint_accounted` proof),
+    - `1208` (remaining valid-time countdown).
+  - Added the same proof checks on heartbeat refresh.
+
+3. Socket measurement expansion (3.4)
+  - Extended bridge polling and MQTT state payload with meter state/type/timestamp and the full socket energy/power blocks.
+  - Added additional voltage/current/power-factor/frequency/apparent/reactive fields and per-phase/total energy counters.
+
+4. Home Assistant discovery expansion
+  - Added HA discovery sensors for the newly published 3.4 fields.
+  - Discovery publication count increased to `58` entities.
+
+5. Control-write behavior refined for this charger setup
+  - `control_slave` default now follows `socket_slave` (slave `1`) unless explicitly overridden.
+  - Example config updated to `control_unit_id = 1`.
+  - Optional prewrite registers (`safe_current`, validity) remain configurable but are not assumed by default.
+
+6. Utility binary for direct write/read verification
+  - Added `src/bin/write_watch.rs` for quick manual validation.
+  - Behavior:
+    - writes `11.0` to `1210`,
+    - prints `1210`, `1214`, and `1208` every `100 ms`.
+
+7. Modbus Explorer enhancements
+  - Added mixed-slave per-register support and improved reconnect/error behavior.
+  - Extended datatype support (`u64`/`f64`) and populated YAML with the full register set from the PDF map.
+
+Notes:
+
+- The code now reflects your observed behavior that control writes work on slave `1`.
+- Some older README sections still describe earlier entity counts/legacy mapping details; use this section as the latest change history.
+
 ## Run
 
 ```bash
-cargo run
-# or
-cargo run -- config.toml
+cargo run --bin alfen-mqtt
+# or with explicit config path
+cargo run --bin alfen-mqtt -- config.toml
+```
+
+## Test Program
+
+Use the lightweight write/read loop helper:
+
+```bash
+# defaults: host=192.168.0.50 port=502 slave=200
+cargo run --bin write_watch
+
+# explicit charger/slave (example: slave 1)
+cargo run --bin write_watch -- 192.168.0.50 502 1
 ```
 
 On startup, the bridge:
@@ -594,13 +650,13 @@ Checks:
 - Run with debug logs:
 
 ```bash
-RUST_LOG=alfen_mqtt=debug cargo run
+RUST_LOG=alfen_mqtt=debug cargo run --bin alfen-mqtt
 ```
 
 - Validate config file path explicitly:
 
 ```bash
-cargo run -- config.toml
+cargo run --bin alfen-mqtt -- config.toml
 ```
 
 - Watch key broker topics (example with mosquitto):

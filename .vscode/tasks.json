@@ -4,47 +4,29 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "run",
+            "label": "alfen-mqtt",
             "type": "shell",
             "options": {
                 "cwd": "${workspaceFolder}",
                 "env": {
                     "RUST_BACKTRACE": "full",
-                    "ZENOH_PLUGINS_PATH": "/home/lieven/workspace/zenoh/target/release/",
+                    "ZENOH_PLUGINS_PATH": "/home/lieven/workspace/zenoh/target/release/"
                 }
             },
-            "command": "~/.cargo/bin/cargo", // note: full path to the cargo
+            "command": "~/.cargo/bin/cargo",
             "args": [
                 "run",
+                "--bin",
+                "alfen-mqtt",
+                "--",
+                "config.toml"
             ],
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
             "presentation": {
-                "clear": true                        // <-- this line
-            }
-        },
-        {
-            "label": "cargo",
-            "type": "shell",
-            "options": {
-                "cwd": "${workspaceFolder}",
-                "env": {
-                    "RUST_BACKTRACE": "full",
-                    "ZENOH_PLUGINS_PATH": "/home/lieven/workspace/zenoh/target/release/",
-                }
-            },
-            "command": "~/.cargo/bin/cargo", // note: full path to the cargo
-            "args": [
-                "run", "--bin", "client"
-            ],
-            "group": {
-                "kind": "build",
-   //             "isDefault": true
-            },
-            "presentation": {
-                "clear": true                        // <-- this line
+                "clear": true
             }
         },
         {
@@ -54,7 +36,7 @@
                 "cwd": "${workspaceFolder}",
                 "env": {
                     "RUST_BACKTRACE": "full",
-                    "ZENOH_PLUGINS_PATH": "/home/lieven/workspace/zenoh/target/release/",
+                    "ZENOH_PLUGINS_PATH": "/home/lieven/workspace/zenoh/target/release/"
                 }
             },
             "command": "~/.cargo/bin/cargo",
@@ -64,6 +46,33 @@
                 "modbus_explorer",
                 "--",
                 "modbus_explorer.yaml"
+            ],
+            "group": {
+                "kind": "build"
+            },
+            "presentation": {
+                "clear": true
+            }
+        },
+        {
+            "label": "write_watch",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "RUST_BACKTRACE": "full",
+                    "ZENOH_PLUGINS_PATH": "/home/lieven/workspace/zenoh/target/release/"
+                }
+            },
+            "command": "~/.cargo/bin/cargo",
+            "args": [
+                "run",
+                "--bin",
+                "write_watch",
+                "--",
+                "192.168.0.50",
+                "502",
+                "1"
             ],
             "group": {
                 "kind": "build"

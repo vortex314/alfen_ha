@@ -1,3 +1,5 @@
+#![recursion_limit = "512"]
+
 use anyhow::{Context, Result};
 use byteorder::{BigEndian, ByteOrder};
 use rumqttc::{AsyncClient, Event, MqttOptions, Packet, QoS};
@@ -35,6 +37,8 @@ struct AlfenConfig {
     #[serde(default)]
     takeover_safe_current_amps: Option<f32>,
     #[serde(default)]
+    takeover_safe_current_register: Option<u16>,
+    #[serde(default)]
     takeover_validity_secs: Option<u16>,
     #[serde(default)]
     takeover_validity_register: Option<u16>,
@@ -53,7 +57,8 @@ impl AlfenConfig {
     }
 
     fn control_slave(&self) -> u8 {
-        self.control_unit_id.unwrap_or_else(|| self.station_slave())
+        // Control/status registers in the 1200-range are on the socket slave on this setup.
+        self.control_unit_id.unwrap_or_else(|| self.socket_slave())
     }
 
     fn takeover_enabled(&self) -> bool {
@@ -64,12 +69,16 @@ impl AlfenConfig {
         self.takeover_safe_current_amps.unwrap_or(6.0)
     }
 
+    fn takeover_safe_current_register(&self) -> Option<u16> {
+        self.takeover_safe_current_register
+    }
+
     fn takeover_validity_secs(&self) -> u16 {
         self.takeover_validity_secs.unwrap_or(120)
     }
 
-    fn takeover_validity_register(&self) -> u16 {
-        self.takeover_validity_register.unwrap_or(reg::SETPOINT_VALIDITY_SECS)
+    fn takeover_validity_register(&self) -> Option<u16> {
+        self.takeover_validity_register
     }
 }
 
@@ -111,47 +120,107 @@ mod reg {
     pub const FIRMWARE_VER: u16 = 136;   // 5  × u16 (10 bytes ASCII)
     pub const ACTIVE_MAX_CURRENT: u16 = 1100; // float32, station active max current
 
-    // -- Meter / measurements (float32 BE, 2 regs each) --
-    pub const VOLTAGE_L1: u16 = 306;     // Vrms line-to-neutral
+    // -- Meter / measurements --
+    pub const METER_STATE: u16 = 300;      // UNSIGNED16 state bitmask
+    pub const METER_LAST_VALUE: u16 = 301; // UNSIGNED64 ms since last received measurement
+    pub const METER_TYPE: u16 = 305;       // UNSIGNED16 meter transport type
+
+    // Voltages (FLOAT32, 2 regs each)
+    pub const VOLTAGE_L1: u16 = 306;       // Vrms line-to-neutral
     pub const VOLTAGE_L2: u16 = 308;
     pub const VOLTAGE_L3: u16 = 310;
-    pub const CURRENT_L1: u16 = 320;     // Arms
+    pub const VOLTAGE_L1_L2: u16 = 312;    // Vrms line-to-line
+    pub const VOLTAGE_L2_L3: u16 = 314;
+    pub const VOLTAGE_L3_L1: u16 = 316;
+
+    // Currents (FLOAT32, 2 regs each)
+    pub const CURRENT_N: u16 = 318;
+    pub const CURRENT_L1: u16 = 320;
     pub const CURRENT_L2: u16 = 322;
     pub const CURRENT_L3: u16 = 324;
-    pub const POWER_L1: u16 = 334;       // W active
-    pub const POWER_L2: u16 = 336;
-    pub const POWER_L3: u16 = 338;
-    pub const POWER_TOTAL: u16 = 340;    // W total
-    pub const POWER_FACTOR: u16 = 342;
+    pub const CURRENT_SUM: u16 = 326;
 
-    // -- Energy (float64 BE, 4 regs) --
-    pub const ENERGY_TOTAL: u16 = 374;   // Wh delivered total
+    // Power factors and frequency (FLOAT32)
+    pub const POWER_FACTOR_L1: u16 = 328;
+    pub const POWER_FACTOR_L2: u16 = 330;
+    pub const POWER_FACTOR_L3: u16 = 332;
+    pub const POWER_FACTOR: u16 = 334;     // Sum
+    pub const FREQUENCY: u16 = 336;        // Hz
+
+    // Real / apparent / reactive power (FLOAT32)
+    pub const POWER_L1: u16 = 338;         // W active
+    pub const POWER_L2: u16 = 340;
+    pub const POWER_L3: u16 = 342;
+    pub const POWER_TOTAL: u16 = 344;
+    pub const APPARENT_POWER_L1: u16 = 346; // VA
+    pub const APPARENT_POWER_L2: u16 = 348;
+    pub const APPARENT_POWER_L3: u16 = 350;
+    pub const APPARENT_POWER_SUM: u16 = 352;
+    pub const REACTIVE_POWER_L1: u16 = 354; // VAr
+    pub const REACTIVE_POWER_L2: u16 = 356;
+    pub const REACTIVE_POWER_L3: u16 = 358;
+    pub const REACTIVE_POWER_SUM: u16 = 360;
+
+    // Energies (FLOAT64, 4 regs each)
+    pub const ENERGY_DELIVERED_L1: u16 = 362; // Wh
+    pub const ENERGY_DELIVERED_L2: u16 = 366;
+    pub const ENERGY_DELIVERED_L3: u16 = 370;
+    pub const ENERGY_TOTAL: u16 = 374;        // Wh delivered sum
+    pub const ENERGY_CONSUMED_L1: u16 = 378;
+    pub const ENERGY_CONSUMED_L2: u16 = 382;
+    pub const ENERGY_CONSUMED_L3: u16 = 386;
+    pub const ENERGY_CONSUMED_SUM: u16 = 390;
+    pub const APPARENT_ENERGY_L1: u16 = 394;  // VAh
+    pub const APPARENT_ENERGY_L2: u16 = 398;
+    pub const APPARENT_ENERGY_L3: u16 = 402;
+    pub const APPARENT_ENERGY_SUM: u16 = 406;
+    pub const REACTIVE_ENERGY_L1: u16 = 410;  // VArh
+    pub const REACTIVE_ENERGY_L2: u16 = 414;
+    pub const REACTIVE_ENERGY_L3: u16 = 418;
+    pub const REACTIVE_ENERGY_SUM: u16 = 422;
 
     // -- Status --
-    pub const APPLIED_MAX_CURRENT: u16 = 1206; // float32, effective applied current limit
-    pub const AVAILABILITY: u16 = 1200;  // 0=unavailable 1=operative
-    pub const MODE3_STATE: u16 = 1201;   // IEC 61851 state A-E
+    pub const AVAILABILITY: u16 = 1200;         // UNSIGNED16, 1=operative 0=inoperative
+    pub const MODE3_STATE: u16 = 1201;           // STRING 5 regs (10 bytes): IEC 61851 state text ("A","B1","C2"…)
+    pub const APPLIED_MAX_CURRENT: u16 = 1206;   // FLOAT32, actual applied overall max current for socket
+    pub const MAX_CURRENT_VALID_TIME: u16 = 1208; // UNSIGNED32, remaining seconds before fallback to safe current
+    pub const ACTIVE_LOAD_BALANCING: u16 = 1212; // FLOAT32, active load balancing safe current
 
     // -- Control (writeable) --
-    pub const SAFE_CURRENT: u16 = 2076; // float32 fallback/safe current during EMS control
-    pub const SETPOINT_VALIDITY_SECS: u16 = 1211; // u16 validity timeout (seconds)
-    pub const MAX_CURRENT: u16 = 1210;   // float32, Amps (0 = disable)
-    pub const SETPOINT_ACCOUNTED: u16 = 1214; // 1=listening, 0=ignored by higher priority
+    pub const MAX_CURRENT: u16 = 1210;           // FLOAT32, Modbus slave max current setpoint (R/W)
+    pub const SETPOINT_ACCOUNTED: u16 = 1214;    // UNSIGNED16, 1=setpoint accepted, 0=overridden
+    pub const PHASES: u16 = 1215;                // UNSIGNED16, 1=single-phase, 3=three-phase (R/W)
 }
 
-/// IEC 61851 charging state
-fn mode3_state_name(state: u16) -> &'static str {
-    match state {
-        0 => "A (not connected)",
-        1 => "B1 (connected, no power)",
-        2 => "B2 (connected, ventilation ok)",
-        3 => "C1 (charging, no ventilation)",
-        4 => "C2 (charging)",
-        5 => "D1 (charging with ventilation)",
-        6 => "D2 (charging with ventilation)",
-        7 => "E (short circuit)",
-        8 => "F (error)",
-        _ => "unknown",
+/// IEC 61851 state string (from register 1201, 5 regs) → friendly description.
+fn mode3_state_description(raw: &str) -> &'static str {
+    match raw.trim_end_matches('\0').trim() {
+        "A"  => "A (not connected)",
+        "B1" => "B1 (connected, no power)",
+        "B2" => "B2 (connected, ventilation ok)",
+        "C1" => "C1 (charging, no ventilation)",
+        "C2" => "C2 (charging)",
+        "D1" => "D1 (charging with ventilation)",
+        "D2" => "D2 (charging with ventilation)",
+        "E"  => "E (short circuit)",
+        "F"  => "F (error)",
+        _    => "unknown",
+    }
+}
+
+/// Map IEC 61851 state string → legacy numeric code for MQTT backward-compatibility.
+fn mode3_string_to_u16(raw: &str) -> u16 {
+    match raw.trim_end_matches('\0').trim() {
+        "A"  => 0,
+        "B1" => 1,
+        "B2" => 2,
+        "C1" => 3,
+        "C2" => 4,
+        "D1" => 5,
+        "D2" => 6,
+        "E"  => 7,
+        "F"  => 8,
+        _    => 255,
     }
 }
 
@@ -173,6 +242,17 @@ fn regs_to_f64(regs: &[u16]) -> f64 {
     BigEndian::write_u16(&mut buf[4..6], regs[2]);
     BigEndian::write_u16(&mut buf[6..8], regs[3]);
     f64::from_be_bytes(buf)
+}
+
+fn regs_to_u32(regs: &[u16]) -> u32 {
+    ((regs[0] as u32) << 16) | (regs[1] as u32)
+}
+
+fn regs_to_u64(regs: &[u16]) -> u64 {
+    ((regs[0] as u64) << 48)
+        | ((regs[1] as u64) << 32)
+        | ((regs[2] as u64) << 16)
+        | (regs[3] as u64)
 }
 
 fn regs_to_string(regs: &[u16]) -> String {
@@ -329,8 +409,14 @@ async fn write_u16_with_fallback(
 struct TakeoverSettings {
     enabled: bool,
     safe_current_amps: f32,
+    /// If `Some`, write this safe-current register before MAX_CURRENT.
+    /// Leave `None` for standard table-based mappings.
+    safe_current_register: Option<u16>,
     validity_secs: u16,
-    validity_register: u16,
+    /// If `Some`, a u16 validity-seconds value is written to this register before MAX_CURRENT.
+    /// There is no such register in the standard Alfen Modbus map; leave `None` unless your
+    /// firmware variant specifically supports it.
+    validity_register: Option<u16>,
 }
 
 async fn write_setpoint_with_takeover(
@@ -343,20 +429,24 @@ async fn write_setpoint_with_takeover(
     ctx.set_slave(Slave(control_slave));
 
     if settings.enabled {
-        if let Err(e) = write_f32_with_fallback(ctx, reg::SAFE_CURRENT, settings.safe_current_amps, "safe_current").await {
-            warn!(
-                "Safe-current prewrite failed on reg{}: {}. Continuing with validity + max-current sequence.",
-                reg::SAFE_CURRENT,
-                e
-            );
+        if let Some(safe_current_reg) = settings.safe_current_register {
+            if let Err(e) = write_f32_with_fallback(ctx, safe_current_reg, settings.safe_current_amps, "safe_current").await {
+                warn!(
+                    "Safe-current prewrite failed on reg{}: {}. Continuing with validity + max-current sequence.",
+                    safe_current_reg,
+                    e
+                );
+            }
         }
-        write_u16_with_fallback(
-            ctx,
-            settings.validity_register,
-            settings.validity_secs,
-            "setpoint_validity_secs",
-        )
-        .await?;
+        if let Some(validity_reg) = settings.validity_register {
+            write_u16_with_fallback(
+                ctx,
+                validity_reg,
+                settings.validity_secs,
+                "setpoint_validity_secs",
+            )
+            .await?;
+        }
     }
 
     write_f32_with_fallback(ctx, reg::MAX_CURRENT, target_amps, context_label).await
@@ -432,6 +522,40 @@ async fn read_optional_f32_with_fallback(
     read.map(|regs| finite_f32_or(regs_to_f32(&regs), 0.0))
 }
 
+async fn read_optional_u32_with_fallback(
+    ctx: &mut tokio_modbus::client::Context,
+    start: u16,
+    label: &str,
+) -> Option<u32> {
+    let read = match ctx.read_holding_registers(start, 2).await {
+        Ok(v) => Some(v),
+        Err(e) => {
+            if is_illegal_data_address(&e) && start < u16::MAX {
+                let fallback_start = start + 1;
+                match ctx.read_holding_registers(fallback_start, 2).await {
+                    Ok(v) => {
+                        warn!(
+                            "Read fallback applied ({label}): addr={start} rejected, using addr={fallback_start}, qty=2"
+                        );
+                        Some(v)
+                    }
+                    Err(e2) => {
+                        warn!(
+                            "Optional read failed ({label}, addr={start}) and fallback (addr={fallback_start}) failed: {e2}"
+                        );
+                        None
+                    }
+                }
+            } else {
+                warn!("Optional read failed ({label}, addr={start}): {e}");
+                None
+            }
+        }
+    };
+
+    read.map(|regs| regs_to_u32(&regs))
+}
+
 async fn read_applied_max_current(ctx: &mut tokio_modbus::client::Context) -> Option<f32> {
     read_optional_f32_with_fallback(ctx, reg::APPLIED_MAX_CURRENT, "applied_max_current").await
 }
@@ -477,6 +601,20 @@ fn log_setpoint_accounted_proof(raw: Option<u16>, context_label: &str) {
         None => warn!(
             "Setpoint proof ({context_label}) reg{} unavailable",
             reg::SETPOINT_ACCOUNTED
+        ),
+    }
+}
+
+fn log_remaining_valid_time(raw: Option<u32>, context_label: &str) {
+    match raw {
+        Some(secs) => info!(
+            "Remaining valid time ({context_label}) reg{}={}s",
+            reg::MAX_CURRENT_VALID_TIME,
+            secs
+        ),
+        None => warn!(
+            "Remaining valid time ({context_label}) reg{} unavailable",
+            reg::MAX_CURRENT_VALID_TIME
         ),
     }
 }
@@ -543,18 +681,53 @@ struct ChargerState {
     firmware_ver: String,
 
     // Measurements
+    meter_state: u16,
+    meter_last_value_ms: u64,
+    meter_type: u16,
     voltage_l1: f32,
     voltage_l2: f32,
     voltage_l3: f32,
+    voltage_l1_l2: f32,
+    voltage_l2_l3: f32,
+    voltage_l3_l1: f32,
+    current_n: f32,
     current_l1: f32,
     current_l2: f32,
     current_l3: f32,
+    current_sum: f32,
+    power_factor_l1: f32,
+    power_factor_l2: f32,
+    power_factor_l3: f32,
     power_l1: f32,
     power_l2: f32,
     power_l3: f32,
     power_total: f32,
     power_factor: f32,
+    frequency_hz: f32,
+    apparent_power_l1: f32,
+    apparent_power_l2: f32,
+    apparent_power_l3: f32,
+    apparent_power_total: f32,
+    reactive_power_l1: f32,
+    reactive_power_l2: f32,
+    reactive_power_l3: f32,
+    reactive_power_total: f32,
+    energy_delivered_l1_kwh: f64,
+    energy_delivered_l2_kwh: f64,
+    energy_delivered_l3_kwh: f64,
     energy_total_kwh: f64,
+    energy_consumed_l1_kwh: f64,
+    energy_consumed_l2_kwh: f64,
+    energy_consumed_l3_kwh: f64,
+    energy_consumed_total_kwh: f64,
+    apparent_energy_l1_kvah: f64,
+    apparent_energy_l2_kvah: f64,
+    apparent_energy_l3_kvah: f64,
+    apparent_energy_total_kvah: f64,
+    reactive_energy_l1_kvarh: f64,
+    reactive_energy_l2_kvarh: f64,
+    reactive_energy_l3_kvarh: f64,
+    reactive_energy_total_kvarh: f64,
 
     // Status
     available: bool,
@@ -563,6 +736,8 @@ struct ChargerState {
     max_current: f32,
     active_max_current: Option<f32>,
     applied_max_current: Option<f32>,
+    active_load_balancing: Option<f32>,
+    phases_raw: Option<u16>,
     setpoint_accounted_raw: Option<u16>,
     setpoint_accounted: Option<bool>,
 }
@@ -573,24 +748,61 @@ impl Default for ChargerState {
             station_name: "unknown".to_string(),
             serial_nr: "unknown".to_string(),
             firmware_ver: "unknown".to_string(),
+            meter_state: 0,
+            meter_last_value_ms: 0,
+            meter_type: 0,
             voltage_l1: 0.0,
             voltage_l2: 0.0,
             voltage_l3: 0.0,
+            voltage_l1_l2: 0.0,
+            voltage_l2_l3: 0.0,
+            voltage_l3_l1: 0.0,
+            current_n: 0.0,
             current_l1: 0.0,
             current_l2: 0.0,
             current_l3: 0.0,
+            current_sum: 0.0,
+            power_factor_l1: 0.0,
+            power_factor_l2: 0.0,
+            power_factor_l3: 0.0,
             power_l1: 0.0,
             power_l2: 0.0,
             power_l3: 0.0,
             power_total: 0.0,
             power_factor: 0.0,
+            frequency_hz: 0.0,
+            apparent_power_l1: 0.0,
+            apparent_power_l2: 0.0,
+            apparent_power_l3: 0.0,
+            apparent_power_total: 0.0,
+            reactive_power_l1: 0.0,
+            reactive_power_l2: 0.0,
+            reactive_power_l3: 0.0,
+            reactive_power_total: 0.0,
+            energy_delivered_l1_kwh: 0.0,
+            energy_delivered_l2_kwh: 0.0,
+            energy_delivered_l3_kwh: 0.0,
             energy_total_kwh: 0.0,
+            energy_consumed_l1_kwh: 0.0,
+            energy_consumed_l2_kwh: 0.0,
+            energy_consumed_l3_kwh: 0.0,
+            energy_consumed_total_kwh: 0.0,
+            apparent_energy_l1_kvah: 0.0,
+            apparent_energy_l2_kvah: 0.0,
+            apparent_energy_l3_kvah: 0.0,
+            apparent_energy_total_kvah: 0.0,
+            reactive_energy_l1_kvarh: 0.0,
+            reactive_energy_l2_kvarh: 0.0,
+            reactive_energy_l3_kvarh: 0.0,
+            reactive_energy_total_kvarh: 0.0,
             available: false,
             mode3_state: 0,
             mode3_state_name: "unknown".to_string(),
             max_current: 0.0,
             active_max_current: None,
             applied_max_current: None,
+            active_load_balancing: None,
+            phases_raw: None,
             setpoint_accounted_raw: None,
             setpoint_accounted: None,
         }
@@ -671,19 +883,24 @@ async fn read_charger(
 
     // Measurements + control telemetry are usually on the socket slave (often 1).
     ctx.set_slave(Slave(socket_slave));
-    // Measurements — read a contiguous block for efficiency
-    // Voltage L1..L3: regs 306-311 (6 regs)
-    let volt_regs = read_with_fallback(ctx, reg::VOLTAGE_L1, 6, "voltages", false).await?;
-    // Current L1..L3: regs 320-325 (6 regs)
-    let curr_regs = read_with_fallback(ctx, reg::CURRENT_L1, 6, "currents", false).await?;
-    // Power L1..total..PF: regs 334-343 (10 regs)
-    let pow_regs = read_with_fallback(ctx, reg::POWER_L1, 10, "powers", false).await?;
-    // Energy total: regs 374-377 (4 regs, float64)
-    let energy_regs = read_with_fallback(ctx, reg::ENERGY_TOTAL, 4, "energy_total", false).await?;
+    // Measurements — read contiguous blocks for efficiency.
+    let meter_regs = read_with_fallback(ctx, reg::METER_STATE, 6, "meter", false).await?;
+    let volt_regs = read_with_fallback(ctx, reg::VOLTAGE_L1, 6, "voltages_ln", false).await?;
+    let volt_ll_regs = read_with_fallback(ctx, reg::VOLTAGE_L1_L2, 6, "voltages_ll", false).await?;
+    let curr_regs = read_with_fallback(ctx, reg::CURRENT_N, 10, "currents", false).await?;
+    let pf_freq_regs = read_with_fallback(ctx, reg::POWER_FACTOR_L1, 10, "power_factor_frequency", false).await?;
+    let pow_regs = read_with_fallback(ctx, reg::POWER_L1, 8, "powers", false).await?;
+    let app_reactive_power_regs = read_with_fallback(ctx, reg::APPARENT_POWER_L1, 16, "apparent_reactive_power", false).await?;
+    let energy_regs = read_with_fallback(ctx, reg::ENERGY_DELIVERED_L1, 64, "energies", false).await?;
     // Status + max_current
-    let status_regs = read_with_fallback(ctx, reg::AVAILABILITY, 2, "availability_mode3", true).await?;
+    let avail_regs = read_with_fallback(ctx, reg::AVAILABILITY, 1, "availability", true).await?;
+    // Mode 3 state: 5 holding registers (10 bytes) containing the IEC 61851 state as an ASCII string.
+    let mode3_regs = read_with_fallback(ctx, reg::MODE3_STATE, 5, "mode3_state", true).await?;
     let max_curr_regs = read_with_fallback(ctx, reg::MAX_CURRENT, 2, "max_current", true).await?;
     let applied_max_current = read_applied_max_current(ctx).await;
+    let active_load_balancing =
+        read_optional_f32_with_fallback(ctx, reg::ACTIVE_LOAD_BALANCING, "active_load_balancing").await;
+    let phases_raw = read_optional_u16_with_fallback(ctx, reg::PHASES, "phases").await;
     let setpoint_accounted_raw = read_setpoint_accounted(ctx).await;
     let (decoded_max_current, max_current_encoding) = decode_max_current(&max_curr_regs);
     if max_current_encoding != "float32"
@@ -696,7 +913,8 @@ async fn read_charger(
         );
     }
 
-    let mode3_state = status_regs[1];
+    let mode3_raw = regs_to_string(&mode3_regs);
+    let mode3_state = mode3_string_to_u16(&mode3_raw);
 
     // Station-level active max current (slave 200 on many Pro-line firmwares).
     ctx.set_slave(Slave(station_slave));
@@ -722,28 +940,67 @@ async fn read_charger(
         serial_nr: regs_to_string(&serial_regs),
         firmware_ver: regs_to_string(&fw_regs),
 
+        meter_state: meter_regs[0],
+        meter_last_value_ms: regs_to_u64(&meter_regs[1..5]),
+        meter_type: meter_regs[5],
+
         voltage_l1: finite_f32_or(regs_to_f32(&volt_regs[0..2]), 0.0),
         voltage_l2: finite_f32_or(regs_to_f32(&volt_regs[2..4]), 0.0),
         voltage_l3: finite_f32_or(regs_to_f32(&volt_regs[4..6]), 0.0),
+        voltage_l1_l2: finite_f32_or(regs_to_f32(&volt_ll_regs[0..2]), 0.0),
+        voltage_l2_l3: finite_f32_or(regs_to_f32(&volt_ll_regs[2..4]), 0.0),
+        voltage_l3_l1: finite_f32_or(regs_to_f32(&volt_ll_regs[4..6]), 0.0),
 
-        current_l1: finite_f32_or(regs_to_f32(&curr_regs[0..2]), 0.0),
-        current_l2: finite_f32_or(regs_to_f32(&curr_regs[2..4]), 0.0),
-        current_l3: finite_f32_or(regs_to_f32(&curr_regs[4..6]), 0.0),
+        current_n: finite_f32_or(regs_to_f32(&curr_regs[0..2]), 0.0),
+        current_l1: finite_f32_or(regs_to_f32(&curr_regs[2..4]), 0.0),
+        current_l2: finite_f32_or(regs_to_f32(&curr_regs[4..6]), 0.0),
+        current_l3: finite_f32_or(regs_to_f32(&curr_regs[6..8]), 0.0),
+        current_sum: finite_f32_or(regs_to_f32(&curr_regs[8..10]), 0.0),
+
+        power_factor_l1: finite_f32_or(regs_to_f32(&pf_freq_regs[0..2]), 0.0),
+        power_factor_l2: finite_f32_or(regs_to_f32(&pf_freq_regs[2..4]), 0.0),
+        power_factor_l3: finite_f32_or(regs_to_f32(&pf_freq_regs[4..6]), 0.0),
+        power_factor: finite_f32_or(regs_to_f32(&pf_freq_regs[6..8]), 0.0),
+        frequency_hz: finite_f32_or(regs_to_f32(&pf_freq_regs[8..10]), 0.0),
 
         power_l1: finite_f32_or(regs_to_f32(&pow_regs[0..2]), 0.0),
         power_l2: finite_f32_or(regs_to_f32(&pow_regs[2..4]), 0.0),
         power_l3: finite_f32_or(regs_to_f32(&pow_regs[4..6]), 0.0),
         power_total: finite_f32_or(regs_to_f32(&pow_regs[6..8]), 0.0),
-        power_factor: finite_f32_or(regs_to_f32(&pow_regs[8..10]), 0.0),
+        apparent_power_l1: finite_f32_or(regs_to_f32(&app_reactive_power_regs[0..2]), 0.0),
+        apparent_power_l2: finite_f32_or(regs_to_f32(&app_reactive_power_regs[2..4]), 0.0),
+        apparent_power_l3: finite_f32_or(regs_to_f32(&app_reactive_power_regs[4..6]), 0.0),
+        apparent_power_total: finite_f32_or(regs_to_f32(&app_reactive_power_regs[6..8]), 0.0),
+        reactive_power_l1: finite_f32_or(regs_to_f32(&app_reactive_power_regs[8..10]), 0.0),
+        reactive_power_l2: finite_f32_or(regs_to_f32(&app_reactive_power_regs[10..12]), 0.0),
+        reactive_power_l3: finite_f32_or(regs_to_f32(&app_reactive_power_regs[12..14]), 0.0),
+        reactive_power_total: finite_f32_or(regs_to_f32(&app_reactive_power_regs[14..16]), 0.0),
 
-        energy_total_kwh: finite_f64_or(regs_to_f64(&energy_regs) / 1000.0, 0.0),
+        energy_delivered_l1_kwh: finite_f64_or(regs_to_f64(&energy_regs[0..4]) / 1000.0, 0.0),
+        energy_delivered_l2_kwh: finite_f64_or(regs_to_f64(&energy_regs[4..8]) / 1000.0, 0.0),
+        energy_delivered_l3_kwh: finite_f64_or(regs_to_f64(&energy_regs[8..12]) / 1000.0, 0.0),
+        energy_total_kwh: finite_f64_or(regs_to_f64(&energy_regs[12..16]) / 1000.0, 0.0),
+        energy_consumed_l1_kwh: finite_f64_or(regs_to_f64(&energy_regs[16..20]) / 1000.0, 0.0),
+        energy_consumed_l2_kwh: finite_f64_or(regs_to_f64(&energy_regs[20..24]) / 1000.0, 0.0),
+        energy_consumed_l3_kwh: finite_f64_or(regs_to_f64(&energy_regs[24..28]) / 1000.0, 0.0),
+        energy_consumed_total_kwh: finite_f64_or(regs_to_f64(&energy_regs[28..32]) / 1000.0, 0.0),
+        apparent_energy_l1_kvah: finite_f64_or(regs_to_f64(&energy_regs[32..36]) / 1000.0, 0.0),
+        apparent_energy_l2_kvah: finite_f64_or(regs_to_f64(&energy_regs[36..40]) / 1000.0, 0.0),
+        apparent_energy_l3_kvah: finite_f64_or(regs_to_f64(&energy_regs[40..44]) / 1000.0, 0.0),
+        apparent_energy_total_kvah: finite_f64_or(regs_to_f64(&energy_regs[44..48]) / 1000.0, 0.0),
+        reactive_energy_l1_kvarh: finite_f64_or(regs_to_f64(&energy_regs[48..52]) / 1000.0, 0.0),
+        reactive_energy_l2_kvarh: finite_f64_or(regs_to_f64(&energy_regs[52..56]) / 1000.0, 0.0),
+        reactive_energy_l3_kvarh: finite_f64_or(regs_to_f64(&energy_regs[56..60]) / 1000.0, 0.0),
+        reactive_energy_total_kvarh: finite_f64_or(regs_to_f64(&energy_regs[60..64]) / 1000.0, 0.0),
 
-        available: status_regs[0] == 1,
+        available: avail_regs[0] == 1,
         mode3_state,
-        mode3_state_name: mode3_state_name(mode3_state).to_string(),
+        mode3_state_name: mode3_state_description(&mode3_raw).to_string(),
         max_current: decoded_max_current,
         active_max_current,
         applied_max_current,
+        active_load_balancing,
+        phases_raw,
         setpoint_accounted_raw,
         setpoint_accounted: setpoint_accounted_raw.map(|v| v == 1),
     })
@@ -933,12 +1190,49 @@ async fn publish_ha_discovery(
     publish_sensor!("Current L1",     "current_l1",      "{{ value_json.current_l1 | round(2) }}",       Some("A"),   Some("current"),      Some("measurement"), None,                  None);
     publish_sensor!("Current L2",     "current_l2",      "{{ value_json.current_l2 | round(2) }}",       Some("A"),   Some("current"),      Some("measurement"), None,                  None);
     publish_sensor!("Current L3",     "current_l3",      "{{ value_json.current_l3 | round(2) }}",       Some("A"),   Some("current"),      Some("measurement"), None,                  None);
+    publish_sensor!("Voltage L1-L2",  "voltage_l1_l2",   "{{ value_json.voltage_l1_l2 | round(1) }}",    Some("V"),   Some("voltage"),      Some("measurement"), None,                  None);
+    publish_sensor!("Voltage L2-L3",  "voltage_l2_l3",   "{{ value_json.voltage_l2_l3 | round(1) }}",    Some("V"),   Some("voltage"),      Some("measurement"), None,                  None);
+    publish_sensor!("Voltage L3-L1",  "voltage_l3_l1",   "{{ value_json.voltage_l3_l1 | round(1) }}",    Some("V"),   Some("voltage"),      Some("measurement"), None,                  None);
+    publish_sensor!("Current N",      "current_n",       "{{ value_json.current_n | round(2) }}",         Some("A"),   Some("current"),      Some("measurement"), None,                  None);
+    publish_sensor!("Current Sum",    "current_sum",     "{{ value_json.current_sum | round(2) }}",       Some("A"),   Some("current"),      Some("measurement"), None,                  None);
     publish_sensor!("Power Factor",   "power_factor",    "{{ value_json.power_factor | round(2) }}",     None,        Some("power_factor"), Some("measurement"), None,                  None);
+    publish_sensor!("Power Factor L1", "power_factor_l1", "{{ value_json.power_factor_l1 | round(2) }}",  None,        Some("power_factor"), Some("measurement"), None,                  None);
+    publish_sensor!("Power Factor L2", "power_factor_l2", "{{ value_json.power_factor_l2 | round(2) }}",  None,        Some("power_factor"), Some("measurement"), None,                  None);
+    publish_sensor!("Power Factor L3", "power_factor_l3", "{{ value_json.power_factor_l3 | round(2) }}",  None,        Some("power_factor"), Some("measurement"), None,                  None);
+    publish_sensor!("Frequency",      "frequency_hz",    "{{ value_json.frequency_hz | round(2) }}",      Some("Hz"),  Some("frequency"),    Some("measurement"), None,                  None);
     publish_sensor!("Energy Total",   "energy_total",    "{{ value_json.energy_total_kwh | round(3) }}", Some("kWh"), Some("energy"),       Some("total_increasing"), None,                  None);
+    publish_sensor!("Delivered Energy L1", "energy_delivered_l1", "{{ value_json.energy_delivered_l1_kwh | round(3) }}", Some("kWh"), Some("energy"), Some("total_increasing"), None, None);
+    publish_sensor!("Delivered Energy L2", "energy_delivered_l2", "{{ value_json.energy_delivered_l2_kwh | round(3) }}", Some("kWh"), Some("energy"), Some("total_increasing"), None, None);
+    publish_sensor!("Delivered Energy L3", "energy_delivered_l3", "{{ value_json.energy_delivered_l3_kwh | round(3) }}", Some("kWh"), Some("energy"), Some("total_increasing"), None, None);
+    publish_sensor!("Consumed Energy L1", "energy_consumed_l1", "{{ value_json.energy_consumed_l1_kwh | round(3) }}", Some("kWh"), Some("energy"), Some("total_increasing"), None, None);
+    publish_sensor!("Consumed Energy L2", "energy_consumed_l2", "{{ value_json.energy_consumed_l2_kwh | round(3) }}", Some("kWh"), Some("energy"), Some("total_increasing"), None, None);
+    publish_sensor!("Consumed Energy L3", "energy_consumed_l3", "{{ value_json.energy_consumed_l3_kwh | round(3) }}", Some("kWh"), Some("energy"), Some("total_increasing"), None, None);
+    publish_sensor!("Consumed Energy Total", "energy_consumed_total", "{{ value_json.energy_consumed_total_kwh | round(3) }}", Some("kWh"), Some("energy"), Some("total_increasing"), None, None);
+    publish_sensor!("Apparent Power L1", "apparent_power_l1", "{{ value_json.apparent_power_l1 | round(1) }}", Some("VA"), None, Some("measurement"), None, None);
+    publish_sensor!("Apparent Power L2", "apparent_power_l2", "{{ value_json.apparent_power_l2 | round(1) }}", Some("VA"), None, Some("measurement"), None, None);
+    publish_sensor!("Apparent Power L3", "apparent_power_l3", "{{ value_json.apparent_power_l3 | round(1) }}", Some("VA"), None, Some("measurement"), None, None);
+    publish_sensor!("Apparent Power Total", "apparent_power_total", "{{ value_json.apparent_power_total | round(1) }}", Some("VA"), None, Some("measurement"), None, None);
+    publish_sensor!("Reactive Power L1", "reactive_power_l1", "{{ value_json.reactive_power_l1 | round(1) }}", Some("VAr"), None, Some("measurement"), None, None);
+    publish_sensor!("Reactive Power L2", "reactive_power_l2", "{{ value_json.reactive_power_l2 | round(1) }}", Some("VAr"), None, Some("measurement"), None, None);
+    publish_sensor!("Reactive Power L3", "reactive_power_l3", "{{ value_json.reactive_power_l3 | round(1) }}", Some("VAr"), None, Some("measurement"), None, None);
+    publish_sensor!("Reactive Power Total", "reactive_power_total", "{{ value_json.reactive_power_total | round(1) }}", Some("VAr"), None, Some("measurement"), None, None);
+    publish_sensor!("Apparent Energy L1", "apparent_energy_l1", "{{ value_json.apparent_energy_l1_kvah | round(3) }}", Some("kVAh"), None, Some("total_increasing"), None, None);
+    publish_sensor!("Apparent Energy L2", "apparent_energy_l2", "{{ value_json.apparent_energy_l2_kvah | round(3) }}", Some("kVAh"), None, Some("total_increasing"), None, None);
+    publish_sensor!("Apparent Energy L3", "apparent_energy_l3", "{{ value_json.apparent_energy_l3_kvah | round(3) }}", Some("kVAh"), None, Some("total_increasing"), None, None);
+    publish_sensor!("Apparent Energy Total", "apparent_energy_total", "{{ value_json.apparent_energy_total_kvah | round(3) }}", Some("kVAh"), None, Some("total_increasing"), None, None);
+    publish_sensor!("Reactive Energy L1", "reactive_energy_l1", "{{ value_json.reactive_energy_l1_kvarh | round(3) }}", Some("kVArh"), None, Some("total_increasing"), None, None);
+    publish_sensor!("Reactive Energy L2", "reactive_energy_l2", "{{ value_json.reactive_energy_l2_kvarh | round(3) }}", Some("kVArh"), None, Some("total_increasing"), None, None);
+    publish_sensor!("Reactive Energy L3", "reactive_energy_l3", "{{ value_json.reactive_energy_l3_kvarh | round(3) }}", Some("kVArh"), None, Some("total_increasing"), None, None);
+    publish_sensor!("Reactive Energy Total", "reactive_energy_total", "{{ value_json.reactive_energy_total_kvarh | round(3) }}", Some("kVArh"), None, Some("total_increasing"), None, None);
     publish_sensor!("Status",         "mode3_state",     "{{ value_json.mode3_state_name }}",             None,        None,                 None,                None,                  Some("mdi:ev-station"));
     publish_sensor!("Max Current",    "max_current_ro",  "{{ value_json.max_current | round(1) }}",       Some("A"),   Some("current"),      Some("measurement"), None,                  Some("mdi:current-ac"));
     publish_sensor!("Active Max Current", "active_max_current", "{{ value_json.active_max_current | round(1) }}", Some("A"), Some("current"), Some("measurement"), Some("diagnostic"), Some("mdi:current-ac"));
     publish_sensor!("Applied Max Current", "applied_max_current", "{{ value_json.applied_max_current | round(1) }}", Some("A"), Some("current"), Some("measurement"), Some("diagnostic"), Some("mdi:current-ac"));
+    publish_sensor!("Active Load Balancing", "active_load_balancing", "{{ value_json.active_load_balancing | round(1) }}", Some("A"), Some("current"), Some("measurement"), Some("diagnostic"), Some("mdi:current-ac"));
+    publish_sensor!("Charge Phases",  "phases_raw",      "{{ value_json.phases_raw }}",                   None,        None,                 None,                Some("diagnostic"),    Some("mdi:power-plug"));
+    publish_sensor!("Meter State",    "meter_state",     "{{ value_json.meter_state }}",                  None,        None,                 None,                Some("diagnostic"),    Some("mdi:gauge"));
+    publish_sensor!("Meter Type",     "meter_type",      "{{ value_json.meter_type }}",                   None,        None,                 None,                Some("diagnostic"),    Some("mdi:lan"));
+    publish_sensor!("Meter Last Update", "meter_last_value_ms", "{{ value_json.meter_last_value_ms }}",   Some("ms"),  None,                 None,                Some("diagnostic"),    Some("mdi:timer-sand"));
     publish_sensor!("Last Error",     "last_error",      "{{ value_json.last_error | default('none', true) }}", None, None, None, Some("diagnostic"), Some("mdi:alert-circle-outline"));
 
     publish_binary_sensor!(
@@ -1017,7 +1311,7 @@ async fn publish_ha_discovery(
         )
         .await?;
 
-    info!("Published HA discovery config for {} entities", 21);
+    info!("Published HA discovery config for {} entities", 58);
     Ok(())
 }
 
@@ -1040,24 +1334,61 @@ async fn publish_state(
         "station_name": state.station_name,
         "serial_nr": state.serial_nr,
         "firmware_ver": state.firmware_ver,
+        "meter_state": state.meter_state,
+        "meter_last_value_ms": state.meter_last_value_ms,
+        "meter_type": state.meter_type,
         "voltage_l1": state.voltage_l1,
         "voltage_l2": state.voltage_l2,
         "voltage_l3": state.voltage_l3,
+        "voltage_l1_l2": state.voltage_l1_l2,
+        "voltage_l2_l3": state.voltage_l2_l3,
+        "voltage_l3_l1": state.voltage_l3_l1,
+        "current_n": state.current_n,
         "current_l1": state.current_l1,
         "current_l2": state.current_l2,
         "current_l3": state.current_l3,
+        "current_sum": state.current_sum,
+        "power_factor_l1": state.power_factor_l1,
+        "power_factor_l2": state.power_factor_l2,
+        "power_factor_l3": state.power_factor_l3,
         "power_l1": state.power_l1,
         "power_l2": state.power_l2,
         "power_l3": state.power_l3,
         "power_total": state.power_total,
         "power_factor": state.power_factor,
+        "frequency_hz": state.frequency_hz,
+        "apparent_power_l1": state.apparent_power_l1,
+        "apparent_power_l2": state.apparent_power_l2,
+        "apparent_power_l3": state.apparent_power_l3,
+        "apparent_power_total": state.apparent_power_total,
+        "reactive_power_l1": state.reactive_power_l1,
+        "reactive_power_l2": state.reactive_power_l2,
+        "reactive_power_l3": state.reactive_power_l3,
+        "reactive_power_total": state.reactive_power_total,
+        "energy_delivered_l1_kwh": state.energy_delivered_l1_kwh,
+        "energy_delivered_l2_kwh": state.energy_delivered_l2_kwh,
+        "energy_delivered_l3_kwh": state.energy_delivered_l3_kwh,
         "energy_total_kwh": state.energy_total_kwh,
+        "energy_consumed_l1_kwh": state.energy_consumed_l1_kwh,
+        "energy_consumed_l2_kwh": state.energy_consumed_l2_kwh,
+        "energy_consumed_l3_kwh": state.energy_consumed_l3_kwh,
+        "energy_consumed_total_kwh": state.energy_consumed_total_kwh,
+        "apparent_energy_l1_kvah": state.apparent_energy_l1_kvah,
+        "apparent_energy_l2_kvah": state.apparent_energy_l2_kvah,
+        "apparent_energy_l3_kvah": state.apparent_energy_l3_kvah,
+        "apparent_energy_total_kvah": state.apparent_energy_total_kvah,
+        "reactive_energy_l1_kvarh": state.reactive_energy_l1_kvarh,
+        "reactive_energy_l2_kvarh": state.reactive_energy_l2_kvarh,
+        "reactive_energy_l3_kvarh": state.reactive_energy_l3_kvarh,
+        "reactive_energy_total_kvarh": state.reactive_energy_total_kvarh,
         "available": state.available,
         "mode3_state": state.mode3_state,
         "mode3_state_name": state.mode3_state_name,
         "max_current": state.max_current,
         "active_max_current": state.active_max_current,
         "applied_max_current": state.applied_max_current,
+        "active_load_balancing": state.active_load_balancing,
+        "phases_raw": state.phases_raw,
         "setpoint_accounted_raw": state.setpoint_accounted_raw,
         "setpoint_accounted": state.setpoint_accounted,
         "comm_ok": comm_ok,
@@ -1172,8 +1503,15 @@ async fn handle_set_max_current(
     write_setpoint_with_takeover(ctx, control_slave, amps, takeover, "set_max_current").await?;
     tokio::time::sleep(Duration::from_secs(2)).await;
     let readback = log_direct_max_current_readback(ctx, "after_set_max_current").await;
+    let remaining_valid_time = read_optional_u32_with_fallback(
+        ctx,
+        reg::MAX_CURRENT_VALID_TIME,
+        "max_current_remaining_valid_time",
+    )
+    .await;
     let accounted_raw = read_setpoint_accounted(ctx).await;
     let applied_limit = read_applied_max_current(ctx).await;
+    log_remaining_valid_time(remaining_valid_time, "after_set_max_current");
     log_setpoint_accounted_proof(accounted_raw, "after_set_max_current");
     log_applied_limit_hint(amps, applied_limit, "after_set_max_current");
     match readback {
@@ -1209,8 +1547,15 @@ async fn handle_set_charging(
     write_setpoint_with_takeover(ctx, control_slave, amps, takeover, "set_charging").await?;
     tokio::time::sleep(Duration::from_secs(2)).await;
     let readback = log_direct_max_current_readback(ctx, "after_set_charging").await;
+    let remaining_valid_time = read_optional_u32_with_fallback(
+        ctx,
+        reg::MAX_CURRENT_VALID_TIME,
+        "max_current_remaining_valid_time",
+    )
+    .await;
     let accounted_raw = read_setpoint_accounted(ctx).await;
     let applied_limit = read_applied_max_current(ctx).await;
+    log_remaining_valid_time(remaining_valid_time, "after_set_charging");
     log_setpoint_accounted_proof(accounted_raw, "after_set_charging");
     log_applied_limit_hint(amps, applied_limit, "after_set_charging");
     match readback {
@@ -1265,8 +1610,9 @@ async fn main() -> Result<()> {
     let takeover = TakeoverSettings {
         enabled: cfg.alfen.takeover_enabled(),
         safe_current_amps: cfg.alfen.takeover_safe_current_amps(),
+        safe_current_register: cfg.alfen.takeover_safe_current_register(),
         validity_secs: cfg.alfen.takeover_validity_secs(),
-        validity_register: cfg.alfen.takeover_validity_register(),
+        validity_register: cfg.alfen.takeover_validity_register(), // None unless explicitly set in config
     };
 
     // ----- MQTT setup -----
@@ -1449,8 +1795,15 @@ async fn main() -> Result<()> {
                         info!("Setpoint heartbeat refreshed {:.1}A", amps);
                         tokio::time::sleep(Duration::from_secs(2)).await;
                         let readback = log_direct_max_current_readback(&mut modbus_ctx, "heartbeat").await;
+                        let remaining_valid_time = read_optional_u32_with_fallback(
+                            &mut modbus_ctx,
+                            reg::MAX_CURRENT_VALID_TIME,
+                            "max_current_remaining_valid_time",
+                        )
+                        .await;
                         let accounted_raw = read_setpoint_accounted(&mut modbus_ctx).await;
                         let applied_limit = read_applied_max_current(&mut modbus_ctx).await;
+                        log_remaining_valid_time(remaining_valid_time, "heartbeat");
                         log_setpoint_accounted_proof(accounted_raw, "heartbeat");
                         log_applied_limit_hint(amps, applied_limit, "heartbeat");
                         if let Some(applied) = readback {
