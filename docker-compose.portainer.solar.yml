@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  alfen-solar:
+    image: alfen-solar:local
+    container_name: alfen-solar
+    restart: unless-stopped
+    network_mode: host
+    command: ["/app/config.toml"]

@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  alfen-ha:
+    image: alfen-ha:local
+    container_name: alfen-ha
+    restart: unless-stopped
+    network_mode: host
+    # Use the config baked into the image to avoid host-path mount issues in Portainer endpoints.
+    command: ["/app/config.toml"]

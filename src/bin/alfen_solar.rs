@@ -3,6 +3,7 @@ use rumqttc::{AsyncClient, Event, Incoming, MqttOptions, QoS};
 use serde::Deserialize;
 use serde_json::json;
 use std::time::{Duration, Instant};
+use tokio::time;
 use tracing::{info, warn};
 
 #[derive(Debug, Deserialize)]
@@ -50,6 +51,8 @@ struct SolarControlConfig {
     switch_high_after_secs: u64,
     #[serde(default = "default_switch_low_after_secs")]
     switch_low_after_secs: u64,
+    #[serde(default = "default_heartbeat_secs")]
+    heartbeat_secs: u64,
     #[serde(default = "default_high_current_amps")]
     solar_high_current_amps: f32,
     #[serde(default = "default_low_current_amps")]
@@ -77,6 +80,7 @@ impl Default for SolarControlConfig {
             power_threshold_kw: default_threshold_kw(),
             switch_high_after_secs: default_switch_high_after_secs(),
             switch_low_after_secs: default_switch_low_after_secs(),
+            heartbeat_secs: default_heartbeat_secs(),
             solar_high_current_amps: default_high_current_amps(),
             solar_low_current_amps: default_low_current_amps(),
             fixed_current_amps: default_fixed_current_amps(),
@@ -110,6 +114,10 @@ fn default_switch_high_after_secs() -> u64 {
 
 fn default_switch_low_after_secs() -> u64 {
     300
+}
+
+fn default_heartbeat_secs() -> u64 {
+    30
 }
 
 fn default_high_current_amps() -> f32 {
@@ -350,6 +358,7 @@ async fn publish_debug_state(
         "last_published_current_a": last_published,
         "switch_high_after_secs": cfg.solar_control.switch_high_after_secs,
         "switch_low_after_secs": cfg.solar_control.switch_low_after_secs,
+        "heartbeat_secs": cfg.solar_control.heartbeat_secs,
         "high_elapsed_secs": high_elapsed_s,
         "low_elapsed_secs": low_elapsed_s,
         "high_remaining_secs": high_remaining_s,
@@ -361,6 +370,28 @@ async fn publish_debug_state(
         .publish(topic, QoS::AtLeastOnce, true, payload)
         .await
         .context("failed to publish solar debug state")?;
+
+    Ok(())
+}
+
+async fn publish_max_current(
+    client: &AsyncClient,
+    set_topic: &str,
+    target: f32,
+    reason: &str,
+    solar_mode: bool,
+    power_kw: Option<f64>,
+) -> Result<()> {
+    let payload = format!("{target:.1}");
+    client
+        .publish(set_topic, QoS::AtLeastOnce, false, payload.clone())
+        .await
+        .with_context(|| format!("failed to publish max_current to topic '{set_topic}'"))?;
+
+    info!(
+        "Published max_current={}A reason={} (solar_mode={}, power_kw={:?})",
+        payload, reason, solar_mode, power_kw
+    );
 
     Ok(())
 }
@@ -465,7 +496,10 @@ async fn main() -> Result<()> {
 
     if let Some(username) = &cfg.mqtt.username {
         if !username.is_empty() {
-            mqttoptions.set_credentials(username.clone(), cfg.mqtt.password.clone().unwrap_or_default());
+            mqttoptions.set_credentials(
+                username.clone(),
+                cfg.mqtt.password.clone().unwrap_or_default(),
+            );
         }
     }
     mqttoptions.set_keep_alive(Duration::from_secs(30));
@@ -500,12 +534,13 @@ async fn main() -> Result<()> {
     }
 
     info!(
-        "alfen_solar started, power='{}', mode_command='{}', mode_state='{}', debug_state='{}', external_mode={:?}",
+        "alfen_solar started, power='{}', mode_command='{}', mode_state='{}', debug_state='{}', external_mode={:?}, heartbeat={}s",
         cfg.solar_control.power_topic,
         mode_command_topic,
         mode_state_topic,
         debug_state_topic,
-        cfg.solar_control.external_mode_topic
+        cfg.solar_control.external_mode_topic,
+        cfg.solar_control.heartbeat_secs.max(5)
     );
 
     let mut solar_mode = false;
@@ -528,83 +563,99 @@ async fn main() -> Result<()> {
     )
     .await?;
 
+    let heartbeat_secs = cfg.solar_control.heartbeat_secs.max(5);
+    let mut heartbeat_ticker = time::interval(Duration::from_secs(heartbeat_secs));
+    heartbeat_ticker.tick().await;
+
     loop {
-        let event = eventloop.poll().await?;
-        let packet = match event {
-            Event::Incoming(Incoming::Publish(p)) => p,
-            Event::Incoming(_) | Event::Outgoing(_) => continue,
-        };
+        tokio::select! {
+            event = eventloop.poll() => {
+                let packet = match event? {
+                    Event::Incoming(Incoming::Publish(p)) => p,
+                    Event::Incoming(_) | Event::Outgoing(_) => continue,
+                };
 
-        if packet.topic == cfg.solar_control.power_topic {
-            if let Some(v) = parse_power_kw(&packet.payload) {
-                power_kw = Some(v);
-                info!("Power update: {v:.3} kW");
-            } else {
-                warn!("Ignoring unparsable power payload: {:?}", packet.payload);
-                continue;
-            }
-        } else if packet.topic == mode_command_topic
-            || cfg
-                .solar_control
-                .external_mode_topic
-                .as_ref()
-                .map(|t| *t == packet.topic)
-                .unwrap_or(false)
-        {
-            if let Some(mode) = parse_mode(&packet.payload, &cfg.solar_control.mode_on_payload) {
-                if solar_mode != mode {
-                    solar_mode = mode;
-                    publish_mode_state(&client, &mode_state_topic, solar_mode, &cfg).await?;
+                if packet.topic == cfg.solar_control.power_topic {
+                    if let Some(v) = parse_power_kw(&packet.payload) {
+                        power_kw = Some(v);
+                        info!("Power update: {v:.3} kW");
+                    } else {
+                        warn!("Ignoring unparsable power payload: {:?}", packet.payload);
+                        continue;
+                    }
+                } else if packet.topic == mode_command_topic
+                    || cfg
+                        .solar_control
+                        .external_mode_topic
+                        .as_ref()
+                        .map(|t| *t == packet.topic)
+                        .unwrap_or(false)
+                {
+                    if let Some(mode) = parse_mode(&packet.payload, &cfg.solar_control.mode_on_payload) {
+                        if solar_mode != mode {
+                            solar_mode = mode;
+                            publish_mode_state(&client, &mode_state_topic, solar_mode, &cfg).await?;
+                        }
+                        info!("Mode update: solar_mode={solar_mode}");
+                    } else {
+                        warn!("Ignoring unparsable mode payload: {:?}", packet.payload);
+                        continue;
+                    }
+                } else {
+                    continue;
                 }
-                info!("Mode update: solar_mode={solar_mode}");
-            } else {
-                warn!("Ignoring unparsable mode payload: {:?}", packet.payload);
-                continue;
+
+                let target = target_current(
+                    &cfg.solar_control,
+                    solar_mode,
+                    power_kw,
+                    &mut high_since,
+                    &mut low_since,
+                    last_published,
+                );
+
+                publish_debug_state(
+                    &client,
+                    &debug_state_topic,
+                    &cfg,
+                    solar_mode,
+                    power_kw,
+                    high_since,
+                    low_since,
+                    target,
+                    last_published,
+                )
+                .await?;
+
+                if cfg.solar_control.publish_only_on_change
+                    && last_published
+                        .map(|prev| (prev - target).abs() < 0.01)
+                        .unwrap_or(false)
+                {
+                    continue;
+                }
+
+                publish_max_current(&client, &set_topic, target, "event", solar_mode, power_kw).await?;
+                last_published = Some(target);
             }
-        } else {
-            continue;
+
+            _ = heartbeat_ticker.tick() => {
+                if let Some(target) = last_published {
+                    publish_max_current(&client, &set_topic, target, "heartbeat", solar_mode, power_kw).await?;
+                    publish_debug_state(
+                        &client,
+                        &debug_state_topic,
+                        &cfg,
+                        solar_mode,
+                        power_kw,
+                        high_since,
+                        low_since,
+                        target,
+                        last_published,
+                    )
+                    .await?;
+                }
+            }
         }
-
-        let target = target_current(
-            &cfg.solar_control,
-            solar_mode,
-            power_kw,
-            &mut high_since,
-            &mut low_since,
-            last_published,
-        );
-
-        publish_debug_state(
-            &client,
-            &debug_state_topic,
-            &cfg,
-            solar_mode,
-            power_kw,
-            high_since,
-            low_since,
-            target,
-            last_published,
-        )
-        .await?;
-
-        if cfg.solar_control.publish_only_on_change
-            && last_published
-                .map(|prev| (prev - target).abs() < 0.01)
-                .unwrap_or(false)
-        {
-            continue;
-        }
-
-        let payload = format!("{target:.1}");
-        client
-            .publish(set_topic.clone(), QoS::AtLeastOnce, false, payload.clone())
-            .await
-            .with_context(|| format!("failed to publish max_current to topic '{set_topic}'"))?;
-
-        last_published = Some(target);
-        info!(
-            "Published max_current={}A (solar_mode={}, power_kw={:?})",
-            payload, solar_mode, power_kw
-        );
     }
 }

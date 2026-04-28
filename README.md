@@ -546,6 +546,7 @@ Behavior:
 - If mode is `solar` and power returned is `<= 5.0 kW`, publish `4.0` A.
 - If mode is `fixed`, publish `fixed_current_amps` (default `6.0` A).
 - Stabilization: in solar mode, the switch to high current only occurs after `switch_high_after_secs` of continuous high power; switch to low current only occurs after `switch_low_after_secs` of continuous low power.
+- Keepalive: the last published max current is re-sent every `heartbeat_secs` seconds (minimum `5s`) to satisfy charger watchdog behavior.
 
 Home Assistant entity:
 
@@ -575,6 +576,7 @@ mode_off_payload = "OFF"
 power_threshold_kw = 5.0
 switch_high_after_secs = 300
 switch_low_after_secs = 300
+heartbeat_secs = 30
 solar_high_current_amps = 6.0
 solar_low_current_amps = 4.0
 fixed_current_amps = 6.0

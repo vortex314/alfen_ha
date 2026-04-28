@@ -47,6 +47,7 @@ debug_state_topic = "alfen/alfen_eve_01/state/solar_debug"
 power_threshold_kw = 5.0
 switch_high_after_secs = 300
 switch_low_after_secs = 300
+heartbeat_secs = 30
 solar_high_current_amps = 6.0
 solar_low_current_amps = 4.0
 fixed_current_amps = 6.0

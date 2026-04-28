@@ -43,8 +43,6 @@ struct AlfenConfig {
     #[serde(default)]
     takeover_validity_register: Option<u16>,
     poll_interval_secs: u64,
-    #[serde(default)]
-    setpoint_heartbeat_secs: Option<u64>,
 }
 
 impl AlfenConfig {
@@ -1702,12 +1700,6 @@ async fn main() -> Result<()> {
     // ----- Main loop -----
     let poll_interval = Duration::from_secs(cfg.alfen.poll_interval_secs);
     let mut poll_ticker = time::interval(poll_interval);
-    let setpoint_heartbeat_secs = cfg.alfen.setpoint_heartbeat_secs.unwrap_or(30).max(5);
-    let mut setpoint_heartbeat_ticker = time::interval(Duration::from_secs(setpoint_heartbeat_secs));
-    // Skip the first immediate tick.
-    setpoint_heartbeat_ticker.tick().await;
-    // Last value requested via MQTT command. Re-sent periodically to satisfy charger watchdog.
-    let mut desired_max_current: Option<f32> = None;
 
     // We drive the MQTT event loop in a background task via a channel.
     // Commands come in through the MQTT eventloop; we forward them via a channel.
@@ -1742,9 +1734,8 @@ async fn main() -> Result<()> {
     });
 
     info!(
-        "Bridge running. Polling every {}s, setpoint heartbeat every {}s",
-        cfg.alfen.poll_interval_secs,
-        setpoint_heartbeat_secs
+        "Bridge running. Polling every {}s",
+        cfg.alfen.poll_interval_secs
     );
 
     loop {
@@ -1786,44 +1777,12 @@ async fn main() -> Result<()> {
                 }
             }
 
-            _ = setpoint_heartbeat_ticker.tick() => {
-                if let Some(amps) = desired_max_current {
-                    if let Err(e) = write_setpoint_with_takeover(&mut modbus_ctx, control_slave, amps, takeover, "setpoint_heartbeat").await {
-                        warn!("Setpoint heartbeat write failed for {:.1}A: {e}", amps);
-                        publish_error_state(&mqtt_client, &format!("setpoint_heartbeat_error: {e}"), &cfg).await.ok();
-                    } else {
-                        info!("Setpoint heartbeat refreshed {:.1}A", amps);
-                        tokio::time::sleep(Duration::from_secs(2)).await;
-                        let readback = log_direct_max_current_readback(&mut modbus_ctx, "heartbeat").await;
-                        let remaining_valid_time = read_optional_u32_with_fallback(
-                            &mut modbus_ctx,
-                            reg::MAX_CURRENT_VALID_TIME,
-                            "max_current_remaining_valid_time",
-                        )
-                        .await;
-                        let accounted_raw = read_setpoint_accounted(&mut modbus_ctx).await;
-                        let applied_limit = read_applied_max_current(&mut modbus_ctx).await;
-                        log_remaining_valid_time(remaining_valid_time, "heartbeat");
-                        log_setpoint_accounted_proof(accounted_raw, "heartbeat");
-                        log_applied_limit_hint(amps, applied_limit, "heartbeat");
-                        if let Some(applied) = readback {
-                            if (applied - amps).abs() > 0.2 {
-                                warn!(
-                                    "Setpoint heartbeat mismatch: requested={amps:.1}A applied={applied:.1}A"
-                                );
-                            }
-                        }
-                    }
-                }
-            }
-
             Some(cmd) = cmd_rx.recv() => {
                 match cmd {
                     CommandMessage::SetMaxCurrent(cmd_payload) => {
                         info!("Received set_max_current command: '{cmd_payload}'");
                         match handle_set_max_current(&mut modbus_ctx, &cmd_payload, control_slave, takeover).await {
-                            Ok(amps) => {
-                                desired_max_current = Some(amps);
+                            Ok(_amps) => {
                                 if let Ok(state) = read_charger(&mut modbus_ctx, socket_slave, station_slave).await {
                                     if let Err(e) = publish_state(&mqtt_client, &state, true, None, &cfg).await {
                                         warn!("Set max current succeeded but failed to publish immediate state: {e}");
@@ -1839,8 +1798,7 @@ async fn main() -> Result<()> {
                     CommandMessage::SetCharging(cmd_payload) => {
                         info!("Received set_charging command: '{cmd_payload}'");
                         match handle_set_charging(&mut modbus_ctx, &cmd_payload, control_slave, takeover).await {
-                            Ok(amps) => {
-                                desired_max_current = Some(amps);
+                            Ok(_amps) => {
                                 if let Ok(state) = read_charger(&mut modbus_ctx, socket_slave, station_slave).await {
                                     if let Err(e) = publish_state(&mqtt_client, &state, true, None, &cfg).await {
                                         warn!("Set charging succeeded but failed to publish immediate state: {e}");

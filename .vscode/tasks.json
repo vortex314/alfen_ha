@@ -48,7 +48,8 @@
                 "modbus_explorer.yaml"
             ],
             "group": {
-                "kind": "build"
+                "kind": "build",
+                "isDefault": true
             },
             "presentation": {
                 "clear": true
@@ -75,7 +76,8 @@
                 "1"
             ],
             "group": {
-                "kind": "build"
+                "kind": "build",
+                "isDefault": true
             },
             "presentation": {
                 "clear": true
@@ -100,11 +102,141 @@
                 "config.toml"
             ],
             "group": {
-                "kind": "build"
+                "kind": "build",
+                "isDefault": true
             },
             "presentation": {
                 "clear": true
             }
+        },
+        {
+            "label": "Build Image for Portainer",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "docker",
+            "args": [
+                "build",
+                "--build-arg",
+                "APP_BIN=alfen-mqtt",
+                "-t",
+                "alfen-ha:local",
+                "."
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Build Solar Image for Portainer",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "command": "docker",
+            "args": [
+                "build",
+                "--build-arg",
+                "APP_BIN=alfen_solar",
+                "-t",
+                "alfen-solar:local",
+                "."
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Load Solar Image to Portainer",
+            "type": "shell",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "dependsOn": [
+                "Build Solar Image for Portainer"
+            ],
+            "command": "bash",
+            "args": [
+                "-lc",
+                "docker save alfen-solar:local | curl --fail-with-body --show-error --silent --insecure -X POST '${input:portainerUrl}/api/endpoints/${input:endpointId}/docker/images/load' -H 'X-API-Key: ${input:apiKey}' -H 'Content-Type: application/x-tar' --data-binary @-"
+            ],
+            "problemMatcher": []
+        },
+        {
+            "label": "Deploy Compose to Portainer",
+            "type": "shell",
+            "dependsOn": [
+                "Build Image for Portainer"
+            ],
+            "command": "${workspaceFolder}/scripts/deploy_portainer_stack.sh",
+            "args": [
+                "--url",
+                "${input:portainerUrl}",
+                "--api-key",
+                "${input:apiKey}",
+                "--endpoint-id",
+                "${input:endpointId}",
+                "--stack-name",
+                "${input:stackName}",
+                "--compose-file",
+                "${input:composeFile}"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Deploy alfen_solar to Portainer",
+            "type": "shell",
+            "dependsOn": [
+                "Load Solar Image to Portainer"
+            ],
+            "command": "${workspaceFolder}/scripts/deploy_portainer_stack.sh",
+            "args": [
+                "--url",
+                "${input:portainerUrl}",
+                "--api-key",
+                "${input:apiKey}",
+                "--endpoint-id",
+                "${input:endpointId}",
+                "--stack-name",
+                "alfen-solar",
+                "--compose-file",
+                "docker-compose.portainer.solar.yml"
+            ],
+            "problemMatcher": []
+        }
+    ],
+    "inputs": [
+        {
+            "id": "portainerUrl",
+            "type": "promptString",
+            "default": "https://pcthink.local:9443",
+            "description": "Portainer base URL (without /api suffix)"
+        },
+        {
+            "id": "endpointId",
+            "type": "promptString",
+            "default": "2",
+            "description": "Portainer endpointId"
+        },
+        {
+            "id": "stackName",
+            "type": "promptString",
+            "default": "alfen-ha",
+            "description": "Portainer stack name"
+        },
+        {
+            "id": "composeFile",
+            "type": "promptString",
+            "default": "docker-compose.portainer.yml",
+            "description": "Compose file path"
+        },
+        {
+            "id": "apiKey",
+            "type": "promptString",
+            "password": true,
+            "description": "API key"
+
         }
     ]
 }
