@@ -538,12 +538,14 @@ cargo run --bin write_watch -- 192.168.0.50 502 1
 `alfen_solar` subscribes to:
 
 - `homeassistant/sensor/esp_p1/dsmr_reader_power_returned`
+- `<topic_prefix>/<unique_id>/state` (reads `power_total` from charger state JSON)
 - an MQTT command topic for solar mode (default: `<topic_prefix>/<unique_id>/set/solar_mode`)
 
 Behavior:
 
 - If mode is `solar` and power returned is `> 5.0 kW`, publish `6.0` A to `<topic_prefix>/<unique_id>/set/max_current`.
 - If mode is `solar` and power returned is `<= 5.0 kW`, publish `4.0` A.
+- Compensation: effective solar power is computed as `p1_returned_kw + charger_power_kw` so active charging does not suppress surplus estimation.
 - If mode is `fixed`, publish `fixed_current_amps` (default `6.0` A).
 - Stabilization: in solar mode, the switch to high current only occurs after `switch_high_after_secs` of continuous high power; switch to low current only occurs after `switch_low_after_secs` of continuous low power.
 - Keepalive: the last published max current is re-sent every `heartbeat_secs` seconds (minimum `5s`) to satisfy charger watchdog behavior.
@@ -566,6 +568,7 @@ Optional config section in `config.toml`:
 ```toml
 [solar_control]
 power_topic = "homeassistant/sensor/esp_p1/dsmr_reader_power_returned"
+charger_state_topic = "alfen/alfen_eve_01/state"
 mode_command_topic = "alfen/alfen_eve_01/set/solar_mode"
 mode_state_topic = "alfen/alfen_eve_01/state/solar_mode"
 debug_state_topic = "alfen/alfen_eve_01/state/solar_debug"

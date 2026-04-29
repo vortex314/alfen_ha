@@ -1,3 +1,36 @@
+//! alfen_solar design summary
+//!
+//! Purpose:
+//! - Translate PV surplus telemetry into `max_current` commands for `alfen-mqtt` over MQTT.
+//! - Compensate P1-based surplus with charger load (`power_total`) so active charging does not
+//!   artificially suppress the available-surplus estimate.
+//! - Provide an operator mode switch (`solar` vs `fixed`) and diagnostic state for HA.
+//!
+//! Runtime model:
+//! - Single async loop with `tokio::select!` over:
+//!   - MQTT events (power/mode updates), and
+//!   - heartbeat ticker ticks.
+//! - On MQTT event:
+//!   - parse latest power and/or mode,
+//!   - compute target current via `target_current`,
+//!   - publish debug state,
+//!   - publish setpoint when changed (or always when configured).
+//! - On heartbeat tick:
+//!   - republish the last setpoint to satisfy charger watchdog behavior,
+//!   - republish debug state.
+//!
+//! Control logic:
+//! - `fixed` mode publishes `fixed_current_amps`.
+//! - `solar` mode uses threshold + hysteresis timers:
+//!   - power above threshold for `switch_high_after_secs` -> high current,
+//!   - power below threshold for `switch_low_after_secs` -> low current.
+//! - If power is missing, keep previous target (no forced jumps).
+//!
+//! Integration boundaries:
+//! - Inputs: power topic, mode command topic, optional external mode topic.
+//! - Outputs: setpoint topic (`.../set/max_current`), mode state topic, debug state topic.
+//! - Optional HA discovery for mode switch and debug sensor.
+
 use anyhow::{Context, Result};
 use rumqttc::{AsyncClient, Event, Incoming, MqttOptions, QoS};
 use serde::Deserialize;
@@ -38,6 +71,8 @@ struct SolarControlConfig {
     #[serde(default = "default_power_topic")]
     power_topic: String,
     #[serde(default)]
+    charger_state_topic: Option<String>,
+    #[serde(default)]
     external_mode_topic: Option<String>,
     #[serde(default)]
     mode_command_topic: Option<String>,
@@ -73,6 +108,7 @@ impl Default for SolarControlConfig {
     fn default() -> Self {
         Self {
             power_topic: default_power_topic(),
+            charger_state_topic: None,
             external_mode_topic: None,
             mode_command_topic: None,
             mode_state_topic: None,
@@ -201,6 +237,22 @@ fn parse_power_kw(payload: &[u8]) -> Option<f64> {
     parse_power_json(&json)
 }
 
+fn parse_charger_power_kw(payload: &[u8]) -> Option<f64> {
+    let raw = std::str::from_utf8(payload).ok()?.trim();
+    let json: serde_json::Value = serde_json::from_str(raw).ok()?;
+    let raw_power = json.get("power_total")?.as_f64()?;
+
+    // In charger state this is typically Watts; convert to kW when magnitude indicates W-scale.
+    let kw = if raw_power.abs() > 100.0 {
+        raw_power / 1000.0
+    } else {
+        raw_power
+    };
+
+    // Only compensate with positive charger draw.
+    Some(kw.max(0.0))
+}
+
 fn parse_mode(payload: &[u8], mode_on_payload: &str) -> Option<bool> {
     let s = std::str::from_utf8(payload).ok()?.trim();
     if s.eq_ignore_ascii_case(mode_on_payload) {
@@ -315,7 +367,9 @@ async fn publish_debug_state(
     topic: &str,
     cfg: &Config,
     solar_mode: bool,
-    power_kw: Option<f64>,
+    p1_power_kw: Option<f64>,
+    charger_power_kw: Option<f64>,
+    effective_power_kw: Option<f64>,
     high_since: Option<Instant>,
     low_since: Option<Instant>,
     target_current: f32,
@@ -337,7 +391,7 @@ async fn publish_debug_state(
     };
 
     let mode_text = if solar_mode { "solar" } else { "fixed" };
-    let power_text = power_kw
+    let power_text = effective_power_kw
         .map(|v| format!("{v:.3}kW"))
         .unwrap_or_else(|| "n/a".to_string());
     let summary = format!(
@@ -352,7 +406,9 @@ async fn publish_debug_state(
     let payload = json!({
         "summary": summary,
         "mode": mode_text,
-        "power_kw": power_kw,
+        "power_kw": effective_power_kw,
+        "p1_power_kw": p1_power_kw,
+        "charger_power_kw": charger_power_kw,
         "threshold_kw": cfg.solar_control.power_threshold_kw,
         "target_current_a": target_current,
         "last_published_current_a": last_published,
@@ -380,7 +436,7 @@ async fn publish_max_current(
     target: f32,
     reason: &str,
     solar_mode: bool,
-    power_kw: Option<f64>,
+    effective_power_kw: Option<f64>,
 ) -> Result<()> {
     let payload = format!("{target:.1}");
     client
@@ -389,8 +445,8 @@ async fn publish_max_current(
         .with_context(|| format!("failed to publish max_current to topic '{set_topic}'"))?;
 
     info!(
-        "Published max_current={}A reason={} (solar_mode={}, power_kw={:?})",
-        payload, reason, solar_mode, power_kw
+        "Published max_current={}A reason={} (solar_mode={}, effective_power_kw={:?})",
+        payload, reason, solar_mode, effective_power_kw
     );
 
     Ok(())
@@ -487,6 +543,11 @@ async fn main() -> Result<()> {
         .debug_state_topic
         .clone()
         .unwrap_or_else(|| format!("{}/{}/state/solar_debug", cfg.mqtt.topic_prefix, cfg.charger.unique_id));
+    let charger_state_topic = cfg
+        .solar_control
+        .charger_state_topic
+        .clone()
+        .unwrap_or_else(|| format!("{}/{}/state", cfg.mqtt.topic_prefix, cfg.charger.unique_id));
 
     let mut mqttoptions = MqttOptions::new(
         format!("{}-alfen_solar", cfg.mqtt.client_id),
@@ -511,6 +572,10 @@ async fn main() -> Result<()> {
         .await
         .context("subscribe power topic failed")?;
     client
+        .subscribe(charger_state_topic.clone(), QoS::AtLeastOnce)
+        .await
+        .context("subscribe charger state topic failed")?;
+    client
         .subscribe(mode_command_topic.clone(), QoS::AtLeastOnce)
         .await
         .context("subscribe mode command topic failed")?;
@@ -534,8 +599,9 @@ async fn main() -> Result<()> {
     }
 
     info!(
-        "alfen_solar started, power='{}', mode_command='{}', mode_state='{}', debug_state='{}', external_mode={:?}, heartbeat={}s",
+        "alfen_solar started, power='{}', charger_state='{}', mode_command='{}', mode_state='{}', debug_state='{}', external_mode={:?}, heartbeat={}s",
         cfg.solar_control.power_topic,
+        charger_state_topic,
         mode_command_topic,
         mode_state_topic,
         debug_state_topic,
@@ -544,10 +610,12 @@ async fn main() -> Result<()> {
     );
 
     let mut solar_mode = false;
-    let mut power_kw: Option<f64> = None;
+    let mut p1_power_kw: Option<f64> = None;
+    let mut charger_power_kw: Option<f64> = None;
     let mut last_published: Option<f32> = None;
     let mut high_since: Option<Instant> = None;
     let mut low_since: Option<Instant> = None;
+    let mut effective_power_kw = p1_power_kw.map(|p1| p1 + charger_power_kw.unwrap_or(0.0));
 
     publish_mode_state(&client, &mode_state_topic, solar_mode, &cfg).await?;
     publish_debug_state(
@@ -555,7 +623,9 @@ async fn main() -> Result<()> {
         &debug_state_topic,
         &cfg,
         solar_mode,
-        power_kw,
+        p1_power_kw,
+        charger_power_kw,
+        effective_power_kw,
         high_since,
         low_since,
         cfg.solar_control.fixed_current_amps,
@@ -577,10 +647,18 @@ async fn main() -> Result<()> {
 
                 if packet.topic == cfg.solar_control.power_topic {
                     if let Some(v) = parse_power_kw(&packet.payload) {
-                        power_kw = Some(v);
+                        p1_power_kw = Some(v);
                         info!("Power update: {v:.3} kW");
                     } else {
                         warn!("Ignoring unparsable power payload: {:?}", packet.payload);
+                        continue;
+                    }
+                } else if packet.topic == charger_state_topic {
+                    if let Some(v) = parse_charger_power_kw(&packet.payload) {
+                        charger_power_kw = Some(v);
+                        info!("Charger power update: {v:.3} kW");
+                    } else {
+                        warn!("Ignoring unparsable charger state payload");
                         continue;
                     }
                 } else if packet.topic == mode_command_topic
@@ -605,10 +683,12 @@ async fn main() -> Result<()> {
                     continue;
                 }
 
+                effective_power_kw = p1_power_kw.map(|p1| p1 + charger_power_kw.unwrap_or(0.0));
+
                 let target = target_current(
                     &cfg.solar_control,
                     solar_mode,
-                    power_kw,
+                    effective_power_kw,
                     &mut high_since,
                     &mut low_since,
                     last_published,
@@ -619,7 +699,9 @@ async fn main() -> Result<()> {
                     &debug_state_topic,
                     &cfg,
                     solar_mode,
-                    power_kw,
+                    p1_power_kw,
+                    charger_power_kw,
+                    effective_power_kw,
                     high_since,
                     low_since,
                     target,
@@ -635,19 +717,21 @@ async fn main() -> Result<()> {
                     continue;
                 }
 
-                publish_max_current(&client, &set_topic, target, "event", solar_mode, power_kw).await?;
+                publish_max_current(&client, &set_topic, target, "event", solar_mode, effective_power_kw).await?;
                 last_published = Some(target);
             }
 
             _ = heartbeat_ticker.tick() => {
                 if let Some(target) = last_published {
-                    publish_max_current(&client, &set_topic, target, "heartbeat", solar_mode, power_kw).await?;
+                    publish_max_current(&client, &set_topic, target, "heartbeat", solar_mode, effective_power_kw).await?;
                     publish_debug_state(
                         &client,
                         &debug_state_topic,
                         &cfg,
                         solar_mode,
-                        power_kw,
+                        p1_power_kw,
+                        charger_power_kw,
+                        effective_power_kw,
                         high_since,
                         low_since,
                         target,

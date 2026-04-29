@@ -40,6 +40,8 @@ unique_id = "alfen_eve_01"
 [solar_control]
 # Live MQTT topic carrying returned solar power for the DSMR reader
 power_topic = "src/esp_p1/sensor/dsmr_reader_power_returned/state"
+# Charger state JSON topic used to compensate P1 returned power with charger load (power_total)
+charger_state_topic = "alfen/alfen_eve_01/state"
 # Auto-discovered HA switch command/state topics for solar charging mode
 mode_command_topic = "alfen/alfen_eve_01/set/solar_mode"
 mode_state_topic = "alfen/alfen_eve_01/state/solar_mode"
